@@ -69,6 +69,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0 14px}th,td
   <div id="sp"></div>
   <div class="row"><button class="b" id="rot">Повернуть</button><button class="b" id="flip">Отразить</button><button class="b main" id="place">Поставить</button></div>
   <div class="row"><button class="b" id="undo">Отмена</button><button class="b main" id="next">Подтвердить раунд</button></div>
+  <div class="row" id="endrow" style="display:none"><button class="b" id="endm">Завершить матч</button></div>
   <div class="box" id="wait"><div id="wt"></div><div class="row" style="margin:8px 0 0"><button class="b" id="skip">Не ждать остальных</button></div></div>
   <div id="sc"></div>
   <div id="tbl"></div>
@@ -162,6 +163,7 @@ function render(){
   $('wait').style.display=wait?'block':'none';
   $('wt').textContent='Ждём: '+S.players.filter(p=>!p.done).map(p=>p.name).join(', ');
   $('skip').style.display=host?'block':'none';
+  $('endrow').style.display=host?'flex':'none';
   if(!wait&&stuck&&!$('msg').textContent)say('Оставшиеся фишки разместить нельзя. Подтвердите раунд.')}
 
 $('board').onclick=e=>{const el=e.target.closest('[data-i]');if(!el||!sel||isWait())return;
@@ -184,6 +186,8 @@ $('flip').onclick=()=>{if(sel&&!sel.used){sel.flip=!sel.flip;render()}};
 $('undo').onclick=()=>{ghost=null;const s=snaps.pop();if(!s)return;board=s.b;dice.forEach((d,i)=>d.used=s.u[i]);sps.forEach((d,i)=>d.used=s.su[i]);spRound=s.sr;sel=s.s;say('');render()};
 $('next').onclick=async()=>{ghost=null;try{await api('confirm',{code:S.code,board,spUsed:sps.map(x=>!!x.used)})}catch(e){say(e.message)}};
 $('skip').onclick=()=>api('skip',{code:S.code}).catch(e=>say(e.message));
+$('endm').onclick=()=>{const go=()=>api('end',{code:S.code}).catch(e=>say(e.message)),t='Завершить матч для всех игроков? Будут посчитаны очки по подтверждённым ходам.';
+  if(tg&&tg.initData&&tg.showConfirm)tg.showConfirm(t,ok=>{if(ok)go()});else if(confirm(t))go()};
 $('mk').onclick=async()=>{try{connect((await api('room')).code)}catch(e){$('err').textContent=e.message}};
 $('jn').onclick=()=>enter($('cd').value.trim().toUpperCase());
 $('st').onclick=()=>api('start',{code:S.code}).catch(e=>$('lw').textContent=e.message);
