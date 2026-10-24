@@ -46,6 +46,9 @@ function api(P,me,b,res){
     p.board=b.board;p.spUsed=b.spUsed.map(Boolean);p.done=true;advance(room);return send(res,200,{})}
   if(P==='/api/skip'){if(room.host!==me.id||room.phase!=='play')return send(res,400,{error:'Недоступно'});
     room.order.forEach(id=>room.players[id].done=true);advance(room);return send(res,200,{})}
+  if(P==='/api/end'){if(room.host!==me.id||room.phase!=='play')return send(res,400,{error:'Недоступно'});
+    room.phase='end';room.results=room.order.map(id=>{const q=room.players[id];return{id,name:q.name,sc:G.score(q.board||Array(49).fill(null))}})
+      .sort((a,b)=>b.sc.total-a.sc.total||a.sc.errors-b.sc.errors);push(room);return send(res,200,{})}
   send(res,404,{error:'not found'})}
 
 http.createServer(async(req,res)=>{
