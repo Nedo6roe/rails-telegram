@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Рельсы и дороги</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#dfe9f2;--paper:#f6fafd;--ink:#1d2a36;--mut:#5d7183;--acc:#c4533d;--ok:#2f8f5b;--line:#9db4c7}
+@media (prefers-color-scheme:dark){:root{--bg:#14202b;--paper:#1c2b39;--ink:#e6eef5;--mut:#93a8ba;--acc:#e0705a;--ok:#4cc486;--line:#3a5166}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",Verdana,sans-serif;padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom));display:flex;justify-content:center}
+.wrap{width:100%;max-width:460px}.view{display:none}
+h1{font-size:18px;margin:2px 0 8px;display:flex;justify-content:space-between;align-items:baseline}
+h1 span{font-size:14px;color:var(--mut);font-weight:normal}
+#board,#tray,#sp,#tbl{--paper:#eaf2f9}
+#board{display:grid;grid-template-columns:22px repeat(7,1fr) 22px;grid-template-rows:22px repeat(7,1fr) 22px;background:radial-gradient(ellipse at 15% 10%,#f4f9fd,transparent 50%),radial-gradient(ellipse at 85% 80%,#9fc3df,transparent 55%),#c9deee;border-radius:14px;padding:6px;aspect-ratio:1}
+.c{position:relative;border:1px solid rgba(30,50,70,.28);overflow:hidden;min-width:0;min-height:0}
+.c svg,.x svg{display:block;width:100%;height:100%}.x{min-width:0;min-height:0}
+.c.bt{border-top:3px solid #111}.c.bb{border-bottom:3px solid #111}.c.bl{border-left:3px solid #111}.c.br{border-right:3px solid #111}
+.c.mt{border-top:2px solid #c4533d}.c.mb{border-bottom:2px solid #c4533d}.c.ml{border-left:2px solid #c4533d}.c.mr{border-right:2px solid #c4533d}
+.c.ok::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:var(--ok);opacity:.6}
+.c.gok{outline:3px solid var(--ok);outline-offset:-3px}.c.gbad{outline:3px solid var(--acc);outline-offset:-3px;background:rgba(196,83,61,.2)}.c.gok::after,.c.gbad::after{display:none}
+#tray,#sp{display:flex;gap:8px;margin:8px 0}#sp{gap:6px;margin-top:0}
+.d{flex:1;aspect-ratio:1;min-width:0;background:var(--paper);border:2px solid #222;border-radius:8px;padding:0;cursor:pointer;overflow:hidden}
+.d svg{width:100%;height:100%;display:block}.d.sel{border-color:#c4533d;box-shadow:0 0 0 2px #c4533d}.d.used{opacity:.25}
+#sp .d{border-width:1px;border-radius:6px}
+#spl{font-size:12px;color:var(--mut);margin:6px 0 4px}
+.row{display:flex;gap:8px;margin-bottom:8px}
+button.b{flex:1;font:inherit;font-size:15px;padding:11px 4px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;touch-action:manipulation}
+button.b.main{background:var(--acc);border-color:var(--acc);color:#fff}button.b:disabled{opacity:.4}
+#msg,#err{min-height:30px;font-size:13px;color:var(--acc);margin:2px 0}
+#sc,.box{background:var(--paper);border-radius:10px;padding:8px 12px;font-size:14px;margin-bottom:8px}
+#sc div{display:flex;justify-content:space-between;padding:2px 0}
+#sc .t{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;font-weight:bold;font-size:17px}
+#tbl{display:grid;grid-template-columns:repeat(11,1fr);font-size:12px;text-align:center;margin-top:8px;background:#eaf2f9;color:#222;border:1px solid #6b7f90;border-radius:6px;overflow:hidden}
+#pl{display:flex;gap:6px;flex-wrap:wrap;font-size:13px;margin-bottom:6px}
+#pl span,.pp span{padding:3px 9px;border-radius:12px;background:var(--paper);border:1px solid var(--line)}#pl .dn{color:var(--ok);border-color:var(--ok)}
+.pp{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.in{width:100%;font:inherit;font-size:16px;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);text-transform:uppercase}
+.code{font-size:34px;letter-spacing:6px;text-align:center;font-weight:bold;margin:6px 0}
+#wait{display:none}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0 14px}th,td{padding:7px 3px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}tr.me td{font-weight:bold;color:var(--acc)}
+</style></head><body><div class="wrap">
+
+<div class="view" id="v-home">
+  <h1>Рельсы и дороги</h1>
+  <p>Игра для 1–5 человек. У каждого своё поле, фишки у всех одинаковые. Всего 7 раундов.</p>
+  <div class="row"><button class="b main" id="mk">Создать игру</button></div>
+  <p>Или войдите по коду друга:</p>
+  <div class="row"><input class="in" id="cd" maxlength="4" placeholder="Код"><button class="b" id="jn" style="flex:0 0 40%">Войти</button></div>
+  <div id="err"></div>
+</div>
+
+<div class="view" id="v-lobby">
+  <h1>Ожидание игроков</h1>
+  <div class="code" id="lc"></div>
+  <div class="pp" id="lp"></div>
+  <div class="row"><button class="b" id="inv">Пригласить друзей</button></div>
+  <div class="row"><button class="b main" id="st">Начать игру</button></div>
+  <div id="lw" style="font-size:13px;color:var(--mut)"></div>
+</div>
+
+<div class="view" id="v-game">
+  <h1>Рельсы и дороги <span id="rd"></span></h1>
+  <div id="pl"></div>
+  <div id="board"></div>
+  <div id="msg"></div>
+  <div id="tray"></div>
+  <div id="spl"></div>
+  <div id="sp"></div>
+  <div class="row"><button class="b" id="rot">Повернуть</button><button class="b" id="flip">Отразить</button><button class="b main" id="place">Поставить</button></div>
+  <div class="row"><button class="b" id="undo">Отмена</button><button class="b main" id="next">Подтвердить раунд</button></div>
+  <div class="box" id="wait"><div id="wt"></div><div class="row" style="margin:8px 0 0"><button class="b" id="skip">Не ждать остальных</button></div></div>
+  <div id="sc"></div>
+  <div id="tbl"></div>
+</div>
+
+<div class="view" id="v-end">
+  <h1>Итоги</h1>
+  <p id="win"></p>
+  <table id="rt"></table>
+  <div class="row"><button class="b main" id="again">Новая игра</button></div>
+</div>
+</div>
+<script src="/game.js"></script>
+<script>
+const G=RI,N=G.N,PTS=G.PTS,$=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tg=window.Telegram&&Telegram.WebApp;if(tg&&tg.initData){tg.ready();tg.expand()}
+const q=new URLSearchParams(location.search);
+let dn=q.get('dev');if(!dn){try{dn=sessionStorage.dv||(sessionStorage.dv='Игрок'+(Math.random()*90+10|0))}catch(e){dn='Игрок'}}
+const INIT=(tg&&tg.initData)||('dev:'+encodeURIComponent(dn)+':'+encodeURIComponent(dn));
+let S=null,es=null,CFG={bot:''},board,dice,sps,sel,snaps,spRound,ghost,localRound=null;
+function show(v){for(const x of['home','lobby','game','end'])$('v-'+x).style.display=x===v?'block':'none'}
+function say(t){$('msg').textContent=t||''}
+async function api(p,b){const r=await fetch('/api/'+p,{method:'POST',headers:{'content-type':'application/json','x-init':INIT},body:JSON.stringify(b||{})});
+  let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||'Ошибка связи');return j}
+function connect(code){if(es)es.close();localRound=null;try{localStorage.ri=code}catch(e){}
+  es=new EventSource('/api/events?code='+code+'&init='+encodeURIComponent(INIT));es.onmessage=e=>onState(JSON.parse(e.data))}
+async function enter(code){try{await api('join',{code});connect(code)}catch(e){$('err').textContent=e.message;try{localStorage.removeItem('ri')}catch(_){}show('home')}}
+const isWait=()=>{const m=S&&S.players.find(p=>p.id===S.me);return !!(m&&m.done)};
+const spTotal=()=>sps.filter(x=>x.used).length;
+
+function tileSVG(t){const e=t.e,P=[[50,0],[100,50],[50,100],[0,50]];
+  const paths=ty=>{const ix=[0,1,2,3].filter(d=>e[d]===ty);
+    if(ix.length===2&&(ix[1]-ix[0])%2===1)return [`M${P[ix[0]]} Q50 50 ${P[ix[1]]}`];
+    return ix.map(d=>`M50 50L${P[d]}`)};
+  const R=paths(1),L=paths(2);let s='<svg viewBox="0 0 100 100" fill="none">';
+  s+=L.map(p=>`<path d="${p}" stroke="#111" stroke-width="3"/><path d="${p}" stroke="#111" stroke-width="16" stroke-dasharray="2.5 7"/>`).join('');
+  s+=R.map(p=>`<path d="${p}" stroke="#222" stroke-width="24"/>`).join('');
+  s+=R.map(p=>`<path d="${p}" stroke="#eaf2f9" stroke-width="20"/>`).join('');
+  s+=R.map(p=>`<path d="${p}" stroke="#222" stroke-width="2" stroke-dasharray="7 6"/>`).join('');
+  if(e.includes(1)&&e.includes(2)&&!G.isOver(t))s+='<rect x="38" y="38" width="24" height="24" fill="#111"/>';
+  return s+'</svg>'}
+
+function onState(s){S=s;
+  if(s.phase==='lobby'){show('lobby');$('lc').textContent=s.code;
+    $('lp').innerHTML=s.players.map(p=>`<span>${esc(p.name)}${p.id===s.host?' ★':''}</span>`).join('');
+    const h=s.host===s.me;$('st').style.display=h?'block':'none';$('lw').textContent=h?'Когда все зашли, нажмите «Начать игру».':'Ждём, пока создатель начнёт игру.';return}
+  if(s.phase==='end'){show('end');
+    const r=s.results,tie=r.length>1&&r[0].sc.total===r[1].sc.total&&r[0].sc.errors===r[1].sc.errors;
+    $('win').innerHTML=r.length<2?'Ваш счёт: <b>'+r[0].sc.total+'</b>':tie?'Ничья':'Победитель: <b>'+esc(r[0].name)+'</b>';
+    $('rt').innerHTML='<tr><th>Игрок</th><th>Сети</th><th>Дор.</th><th>Рельсы</th><th>Центр</th><th>Откр.</th><th>Итого</th></tr>'+
+      r.map((p,i)=>`<tr class="${p.id===s.me?'me':''}"><td>${i+1}. ${esc(p.name)}</td><td>${p.sc.nets}</td><td>${p.sc.road}</td><td>${p.sc.rail}</td><td>${p.sc.center}</td><td>−${p.sc.errors}</td><td>${p.sc.total}</td></tr>`).join('');
+    try{localStorage.removeItem('ri')}catch(e){}return}
+  show('game');
+  if(localRound!==s.round){localRound=s.round;
+    board=s.mine.board?s.mine.board.slice():Array(N*N).fill(null);
+    const used=s.mine.spUsed||Array(6).fill(false);
+    sps=G.SP.map((x,k)=>({base:x.base,st:x.st,rot:0,flip:false,used:used[k],sp:1}));
+    dice=s.bases.map(d=>({base:d.base,st:d.st,rot:0,flip:false,used:false}));
+    sel=dice[0];snaps=[];spRound=false;ghost=null;say('')}
+  render()}
+
+function render(){
+  const wait=isWait(),host=S.host===S.me;
+  $('rd').textContent='Раунд '+S.round+' из 7';
+  $('pl').innerHTML=S.players.map(p=>`<span class="${p.done?'dn':''}">${esc(p.name)}${p.done?' ✓':''}</span>`).join('');
+  let h='';
+  for(let R=0;R<N+2;R++)for(let C=0;C<N+2;C++){
+    const r=R-1,c=C-1;
+    if(r>=0&&r<N&&c>=0&&c<N){const t=board[r*N+c];
+      let cl='c'+(r===0?' bt':'')+(r===N-1?' bb':'')+(c===0?' bl':'')+(c===N-1?' br':'')+(r===2&&c>=2&&c<=4?' mt':'')+(r===4&&c>=2&&c<=4?' mb':'')+(c===2&&r>=2&&r<=4?' ml':'')+(c===4&&r>=2&&r<=4?' mr':'');
+      const isG=!wait&&ghost===r*N+c&&!t&&sel&&!sel.used;
+      if(isG)cl+=G.check(board,r,c,G.cur(sel))?' gok':' gbad';
+      else if(!wait&&!t&&sel&&!sel.used&&G.check(board,r,c,G.cur(sel)))cl+=' ok';
+      h+=`<div class="${cl}" data-i="${r*N+c}">${t?tileSVG(t):isG?tileSVG(G.cur(sel)):''}</div>`}
+    else{let ty=0,sym=[0,0,0,0];
+      if(R===0&&c>=0&&c<N){ty=G.exitAt(0,c,0);sym=[0,0,1,0]}
+      else if(R===N+1&&c>=0&&c<N){ty=G.exitAt(N-1,c,2);sym=[1,0,0,0]}
+      else if(C===0&&r>=0&&r<N){ty=G.exitAt(r,0,3);sym=[0,1,0,0]}
+      else if(C===N+1&&r>=0&&r<N){ty=G.exitAt(r,N-1,1);sym=[0,0,0,1]}
+      h+=`<div class="x">${ty?tileSVG({e:sym.map(v=>v&&ty),st:0}).replace('</svg>','<polygon points="50,22 76,50 50,78 24,50" fill="#c4533d"/></svg>'):''}</div>`}}
+  $('board').innerHTML=h;
+  $('tray').innerHTML=dice.map((d,i)=>`<button class="d${d===sel?' sel':''}${d.used?' used':''}" data-d="${i}">${tileSVG(G.cur(d))}</button>`).join('');
+  $('spl').textContent=`Особые фишки: осталось ${3-spTotal()} из 3, не больше одной за раунд${spRound?' (в этом раунде уже использована)':''}`;
+  $('sp').innerHTML=sps.map((d,i)=>`<button class="d${d===sel?' sel':''}${d.used?' used':''}" data-s="${i}">${tileSVG(G.cur(d))}</button>`).join('');
+  const s=G.score(board),all=dice.every(d=>d.used),stuck=!all&&dice.filter(d=>!d.used).every(d=>!G.canPlace(board,d));
+  $('sc').innerHTML=`<div><span>Сети выходов</span><b>${s.nets}</b></div><div><span>Длиннейшая дорога</span><b>${s.road}</b></div><div><span>Длиннейший рельсовый путь</span><b>${s.rail}</b></div><div><span>Центр</span><b>${s.center}</b></div><div><span>Открытые концы</span><b>−${s.errors}</b></div><div class="t"><span>Итого</span><span>${s.total}</span></div>`;
+  $('next').disabled=wait||!(all||stuck);
+  $('next').textContent=S.round===7?'Завершить игру':'Подтвердить раунд';
+  for(const id of['rot','flip','place','undo'])$(id).disabled=wait||(id==='place'&&!(ghost!=null&&sel&&!sel.used&&!board[ghost]&&G.check(board,(ghost/N)|0,ghost%N,G.cur(sel))));
+  $('wait').style.display=wait?'block':'none';
+  $('wt').textContent='Ждём: '+S.players.filter(p=>!p.done).map(p=>p.name).join(', ');
+  $('skip').style.display=host?'block':'none';
+  if(!wait&&stuck&&!$('msg').textContent)say('Оставшиеся фишки разместить нельзя. Подтвердите раунд.')}
+
+$('board').onclick=e=>{const el=e.target.closest('[data-i]');if(!el||!sel||isWait())return;
+  const i=+el.dataset.i,d=sel;if(d.used)return say('Эта фишка уже на поле. Выберите другую.');
+  if(board[i])return say('Клетка занята.');
+  if(ghost===i)d.rot=(d.rot+1)%4;else ghost=i;
+  say(G.check(board,(i/N)|0,i%N,G.cur(d))?'Подходит. Нажмите «Поставить» или крутите дальше (нажатие на фишку).':'Здесь не подходит: поверните или отразите фишку, либо выберите другую клетку.');render()};
+$('place').onclick=()=>{const d=sel;if(isWait()||!d||d.used||ghost==null||board[ghost])return;const i=ghost,t=G.cur(d);
+  if(!G.check(board,(i/N)|0,i%N,t))return say('Сюда нельзя: фишка должна соединяться с выходом или другим путём, а дорога не стыкуется с рельсами без станции.');
+  snaps.push({b:board.slice(),u:dice.map(x=>x.used),su:sps.map(x=>x.used),sr:spRound,s:sel});
+  board[i]=t;d.used=true;if(d.sp)spRound=true;ghost=null;sel=dice.find(x=>!x.used)||null;say('');render()};
+$('tray').onclick=e=>{const b=e.target.closest('[data-d]');if(!b||isWait())return;const n=dice[+b.dataset.d];if(n===sel&&!n.used)n.rot=(n.rot+1)%4;sel=n;say('');render()};
+$('sp').onclick=e=>{const b=e.target.closest('[data-s]');if(!b||isWait())return;const d=sps[+b.dataset.s];
+  if(d.used)return say('Эта особая фишка уже использована.');
+  if(spTotal()>=3)return say('Особые фишки закончились: за партию можно три.');
+  if(spRound)return say('В этом раунде особая фишка уже использована.');
+  sel=d;say('');render()};
+$('rot').onclick=()=>{if(sel&&!sel.used){sel.rot=(sel.rot+1)%4;render()}};
+$('flip').onclick=()=>{if(sel&&!sel.used){sel.flip=!sel.flip;render()}};
+$('undo').onclick=()=>{ghost=null;const s=snaps.pop();if(!s)return;board=s.b;dice.forEach((d,i)=>d.used=s.u[i]);sps.forEach((d,i)=>d.used=s.su[i]);spRound=s.sr;sel=s.s;say('');render()};
+$('next').onclick=async()=>{ghost=null;try{await api('confirm',{code:S.code,board,spUsed:sps.map(x=>!!x.used)})}catch(e){say(e.message)}};
+$('skip').onclick=()=>api('skip',{code:S.code}).catch(e=>say(e.message));
+$('mk').onclick=async()=>{try{connect((await api('room')).code)}catch(e){$('err').textContent=e.message}};
+$('jn').onclick=()=>enter($('cd').value.trim().toUpperCase());
+$('st').onclick=()=>api('start',{code:S.code}).catch(e=>$('lw').textContent=e.message);
+$('inv').onclick=()=>{
+  const link=CFG.bot?'https://t.me/'+CFG.bot+'?start='+S.code:location.origin+'/?room='+S.code,text='Сыграем в «Рельсы и дороги»! Код комнаты: '+S.code;
+  if(tg&&tg.openTelegramLink&&CFG.bot)tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(text));
+  else if(navigator.clipboard){navigator.clipboard.writeText(link);$('lw').textContent='Ссылка скопирована.'}};
+$('again').onclick=()=>{if(es)es.close();S=null;show('home')};
+$('tbl').innerHTML=PTS.slice(2).map((p,i)=>`<b style="border-right:1px solid #9db4c7;padding:3px 0">${i+2}</b>`).join('')+PTS.slice(2).map(p=>`<span style="border-right:1px solid #9db4c7;border-top:1px solid #9db4c7;padding:3px 0">${p}</span>`).join('');
+fetch('/api/config').then(r=>r.json()).then(c=>CFG=c).catch(()=>{});
+let c0=q.get('room');if(!c0){try{c0=localStorage.ri}catch(e){}}
+if(c0)enter(c0.toUpperCase());else show('home');
+</script></body></html>
