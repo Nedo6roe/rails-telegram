@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Покер</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#000;--p:#1c1c1e;--p2:#2c2c2e;--t:#fff;--s:#8e8e93;--a:#0a84ff;--r:#ff453a;--g:#30d158;--y:#ffd60a;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.wrap{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
+h1{font-size:34px;margin:8px 0 4px;letter-spacing:-.5px}
+.sub{color:var(--s);font-size:15px;margin:0 0 22px}
+.card-p{background:var(--p);border-radius:22px;padding:18px}
+.btn{height:50px;border-radius:25px;padding:0 22px;font-size:16px;font-weight:600;background:var(--p2);transition:transform .08s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--a)}.btn.wh{background:#fff;color:#000}.btn.red{background:#3a1f21;color:var(--r)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.row{display:flex;gap:10px}.row>*{flex:1}
+input{width:100%;height:50px;border-radius:14px;border:0;background:var(--p2);color:#fff;font:inherit;font-size:18px;text-align:center;letter-spacing:4px;text-transform:uppercase;outline:none}
+.code{font-size:44px;font-weight:700;letter-spacing:8px;text-align:center;margin:6px 0 2px}
+.pl{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #2c2c2e}.pl:first-child{border-top:0}
+.av{width:44px;height:44px;border-radius:50%;background:var(--p2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;flex:none}
+.top{display:flex;justify-content:space-between;align-items:center;color:var(--s);font-size:13px;padding:2px 4px 10px}
+.opps{display:flex;justify-content:center;gap:14px;min-height:118px}
+.op{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;min-width:0;width:80px;position:relative}
+.op .av{width:48px;height:48px;border:3px solid transparent;position:relative}
+.op.turn .av{border-color:var(--a)}.op.win .av{border-color:var(--g)}
+.op.dim{opacity:.4}
+.op .nm{font-weight:600;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.op .ch{color:var(--y)}.op .st{color:var(--s);min-height:15px;font-size:11px;text-align:center}
+.dbtn{position:absolute;top:-4px;right:-6px;width:20px;height:20px;border-radius:50%;background:#fff;color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.bar{height:3px;border-radius:2px;background:#2c2c2e;width:44px;overflow:hidden;margin-top:2px}.bar i{display:block;height:100%;width:100%;background:var(--a)}
+.mini{display:flex;gap:2px}.mc{width:20px;height:28px;border-radius:4px;background:#2b4a8b;border:1px solid #4a6ab0}
+.mc.f{background:#f2f2f7;color:#000;font-size:10px;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:0}
+.red{color:var(--r)}
+.table{background:var(--p);border-radius:26px;padding:16px 10px 14px;margin:8px 0;text-align:center}
+.lab{font-size:12px;color:var(--s);letter-spacing:1px}
+.pot{font-size:30px;font-weight:700;margin:2px 0 12px}
+.board{display:flex;gap:6px;justify-content:center}
+.c{width:52px;height:74px;border-radius:9px;background:#f2f2f7;color:#1c1c1e;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,.5);flex:none}
+.c b{font-size:20px;line-height:1}.c span{font-size:26px;line-height:1.1}.c.r{color:var(--r)}
+.c.e{background:var(--p2);box-shadow:none}
+.c.in{animation:deal .35s ease-out both}
+@keyframes deal{from{opacity:0;transform:translateY(-14px) scale(.9)}to{opacity:1;transform:none}}
+.msg{min-height:22px;margin-top:12px;font-size:14px;font-weight:600}
+.msg.w{color:var(--g)}
+.me{display:flex;flex-direction:column;align-items:center;margin:6px 0 4px}
+.hole{display:flex;gap:0;margin:2px 0 6px;height:112px}
+.hole .c{width:70px;height:100px}.hole .c b{font-size:26px}.hole .c span{font-size:34px}
+.hole .c:first-child{transform:rotate(-6deg) translateX(8px)}.hole .c:last-child{transform:rotate(6deg) translateX(-8px)}
+.hole.win .c{box-shadow:0 0 0 3px var(--g)}
+.mi{font-size:14px;color:var(--s)}.mi b{color:#fff}.hn{font-size:15px;font-weight:600;color:var(--y);min-height:20px;margin-bottom:2px}
+.acts{margin-top:auto;padding-top:8px;position:sticky;bottom:0;background:linear-gradient(transparent,#000 14px)}
+.acts .bar{width:100%;height:4px;margin:0 0 10px}
+.rp{background:var(--p);border-radius:20px;padding:14px;margin-bottom:10px}
+.rp .big{font-size:28px;font-weight:700;text-align:center}
+input[type=range]{height:30px;letter-spacing:0;background:none;accent-color:var(--a)}
+.q{display:flex;gap:8px;margin:6px 0 10px}.q button{flex:1;height:36px;border-radius:18px;background:var(--p2);font-size:13px}
+.toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:#3a1f21;color:#ff9f98;padding:10px 16px;border-radius:14px;font-size:14px;z-index:9;max-width:90%}
+.link{color:var(--a);background:none;font-size:13px;padding:4px}
+.res{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #2c2c2e;font-size:17px}.res:first-child{border-top:0}
+.res .n{width:26px;color:var(--s);font-weight:600}.res .z{margin-left:auto;color:var(--y);font-weight:600}
+</style></head><body><div class="wrap" id="app"></div>
+<script>
+const tg=window.Telegram&&Telegram.WebApp;try{tg&&(tg.ready(),tg.expand(),tg.setBackgroundColor&&tg.setBackgroundColor('#000000'),tg.setHeaderColor&&tg.setHeaderColor('#000000'))}catch(_){}
+const $=id=>document.getElementById(id),app=$('app');
+const qs=new URLSearchParams(location.search);
+let INIT=(tg&&tg.initData)||'';
+if(!INIT&&qs.get('dev')){const n=qs.get('dev');INIT='dev:'+encodeURIComponent(n)+':'+encodeURIComponent(n)}
+let W=null,TOP=[],S=null,code=null,es=null,offset=0,raiseOpen=false,raiseVal=0,lastTurnKey='',prevBoard=0,prevHand=-1,toastT=null,botName='';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RK=['2','3','4','5','6','7','8','9','10','J','Q','K','A'],SU=['♠','♥','♦','♣'];
+const red=c=>(c&3)===1||(c&3)===2;
+const card=(c,cls='')=>`<div class="c ${red(c)?'r':''} ${cls}"><b>${RK[c>>2]}</b><span>${SU[c&3]}</span></div>`;
+const mini=c=>`<div class="mc f ${red(c)?'red':''}"><b>${RK[c>>2]}</b><span>${SU[c&3]}</span></div>`;
+const hap=t=>{try{tg&&tg.HapticFeedback&&tg.HapticFeedback.impactOccurred(t||'light')}catch(_){}};
+function toast(t){clearTimeout(toastT);let e=document.querySelector('.toast');if(!e){e=document.createElement('div');e.className='toast';document.body.appendChild(e)}e.textContent=t;toastT=setTimeout(()=>e.remove(),3200)}
+async function post(path,b){try{const r=await fetch(path,{method:'POST',headers:{'content-type':'application/json','x-init':INIT},body:JSON.stringify(b||{})});const j=await r.json();if(!r.ok){toast(j.error||'Ошибка');return null}return j}catch(e){toast('Нет связи с сервером');return null}}
+async function cfg(){try{botName=(await (await fetch('/api/config')).json()).bot||''}catch(_){}}
+const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const saveLocal=v=>{try{localStorage.setItem('wallet',String(v))}catch(_){}try{tg&&tg.CloudStorage&&tg.CloudStorage.setItem('wallet',String(v))}catch(_){}};
+const readSaved=()=>new Promise(ok=>{let done=false;const fin=v=>{if(!done){done=true;ok(v)}};
+  try{if(tg&&tg.CloudStorage){tg.CloudStorage.getItem('wallet',(e,v)=>fin(!e&&v!==''&&v!=null?Number(v):null));setTimeout(()=>fin(null),1500);return}}catch(_){}
+  try{const v=localStorage.getItem('wallet');fin(v===null?null:Number(v))}catch(_){fin(null)}});
+async function loadMe(){const saved=await readSaved();const r=await post('/api/me',{saved});if(r){W=r.wallet;TOP=r.top||[];saveLocal(W)}}
+function connect(c){code=c;if(es)es.close();es=new EventSource('/api/events?code='+c+'&init='+encodeURIComponent(INIT));
+  es.onmessage=e=>{S=JSON.parse(e.data);offset=Date.now()-S.serverNow;if(typeof S.wallet==='number'){W=S.wallet;saveLocal(W)}render()};
+  es.onerror=()=>{}}
+function home(){app.innerHTML=`<h1>Покер</h1><p class="sub">Техасский холдем на игровые фишки. Денег нет.</p>
+ <div class="card-p" style="margin-bottom:12px;text-align:center"><div class="lab">ВАШ КОШЕЛЁК</div><div style="font-size:38px;font-weight:700;margin:4px 0 2px;color:var(--y)">${W==null?'…':fmt(W)}</div><div class="sub" style="margin:0;font-size:13px">Вход за стол — ${fmt(1000)} фишек. Остаток вернётся в кошелёк.</div></div>
+ ${TOP.length>1?`<div class="card-p" style="margin-bottom:12px"><div class="lab" style="margin-bottom:6px">РЕЙТИНГ</div>${TOP.map((t,i)=>`<div class="res" style="padding:8px 0;font-size:15px"><span class="n">${i+1}</span><span>${esc(t.name)}</span><span class="z">${fmt(t.bal)}</span></div>`).join('')}</div>`:''}
+ <div class="card-p"><button class="btn pri" id="mk" style="width:100%">Создать стол</button>
+ <p class="sub" style="margin:18px 0 8px;text-align:center">или войти по коду</p>
+ <div class="row"><input id="cd" maxlength="4" placeholder="КОД" autocomplete="off"><button class="btn wh" id="jn" style="flex:0 0 110px">Войти</button></div></div>`;
+ $('mk').onclick=async()=>{const r=await post('/api/room');if(r)connect(r.code)};
+ $('jn').onclick=async()=>{const c=$('cd').value.trim().toUpperCase();if(c.length<4)return toast('Введите код из 4 букв');const r=await post('/api/join',{code:c});if(r)connect(c)}}
+function lobby(){const me=S.me;
+ const link=botName?`https://t.me/${botName}?start=${S.code}`:'';
+ app.innerHTML=`<h1>Стол</h1><p class="sub">Покажите код друзьям. За столом 2–5 игроков. Вход ${fmt(S.buyin)} фишек из кошелька: слева имя, справа кошелёк.</p>
+ <div class="card-p"><div class="lab" style="text-align:center">КОД СТОЛА</div><div class="code">${S.code}</div>
+ ${link?'<button class="btn wh" id="inv" style="width:100%;margin-top:14px">Пригласить друзей</button>':''}</div>
+ <div class="card-p" style="margin-top:12px">${S.players.map(p=>`<div class="pl"><div class="av">${esc(p.name[0]||'?')}</div><div style="font-weight:600">${esc(p.name)}${p.id===S.host?' <span style="color:var(--s);font-weight:400">· создатель</span>':''}</div><div style="margin-left:auto;color:var(--y);font-weight:600">${fmt(p.wallet||0)}</div></div>`).join('')}</div>
+ <div style="margin-top:auto;padding-top:16px">${S.host===me?`<button class="btn pri" id="go" style="width:100%" ${S.players.length<2?'disabled':''}>Начать игру</button>${S.players.length<2?'<p class="sub" style="text-align:center;margin:10px 0 0">Ждём хотя бы ещё одного игрока</p>':''}`:'<p class="sub" style="text-align:center">Ждём, когда создатель начнёт игру…</p>'}</div>`;
+ const inv=$('inv');if(inv)inv.onclick=()=>{const u='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('Садись за покерный стол, код '+S.code);tg&&tg.openTelegramLink?tg.openTelegramLink(u):window.open(u,'_blank')};
+ const go=$('go');if(go)go.onclick=()=>post('/api/start',{code:S.code})}
+function end(){app.innerHTML=`<h1>Итоги</h1><p class="sub">Игра окончена</p><div class="card-p">${S.results.map((r,i)=>{const d=S.delta?S.delta[r.id]:null;return `<div class="res"><span class="n">${i+1}</span><span>${esc(r.name)}${i===0?' 🏆':''}</span><span class="z">${fmt(r.chips)}${d!=null?` <span style="color:${d>=0?'var(--g)':'var(--r)'};font-size:14px">${d>=0?'+':''}${fmt(d)}</span>`:''}</span></div>`}).join('')}</div>
+ <div class="card-p" style="margin-top:12px;text-align:center"><div class="lab">ВАШ КОШЕЛЁК</div><div style="font-size:34px;font-weight:700;color:var(--y)">${fmt(S.wallet)}</div></div>
+ <div style="margin-top:auto;padding-top:16px"><button class="btn wh" id="again" style="width:100%">На главную</button></div>`;
+ $('again').onclick=async()=>{if(es)es.close();S=null;code=null;home();await loadMe();if(!S&&!code)home()}}
+const remain=()=>S&&S.deadline?Math.max(0,S.deadline-(Date.now()-offset)):0;
+function oppHtml(p){const win=S.showdown&&S.showdown.pots.some(x=>x.winners.includes(p.id));
+ const turn=S.toAct===p.id,cls=(p.folded||p.out?'dim ':'')+(turn?'turn ':'')+(win?'win':'');
+ const cards=p.out?'':p.hole?`<div class="mini">${p.hole.map(mini).join('')}</div>`:p.hasCards?`<div class="mini"><div class="mc"></div><div class="mc"></div></div>`:'';
+ const st=p.out?'вышел':p.last||(p.folded?'сброс':'');
+ return `<div class="op ${cls}" data-id="${p.id}"><div class="av">${esc(p.name[0]||'?')}${S.dealer===p.id?'<div class="dbtn">D</div>':''}</div><div class="nm">${esc(p.name)}</div><div class="ch">${p.chips}</div>${cards}<div class="st">${esc(st)}${p.hand&&S.showdown&&!S.showdown.uncontested?'<br>'+esc(p.hand):''}</div>${turn?'<div class="bar"><i></i></div>':''}</div>`}
+function play(){const me=S.players.find(p=>p.id===S.me),opps=S.players.filter(p=>p.id!==S.me);
+ const myTurn=S.toAct===S.me&&S.phase==='play',sd=S.showdown;
+ const turnKey=S.hand+':'+S.stage+':'+S.toAct+':'+S.currentBet;if(turnKey!==lastTurnKey){lastTurnKey=turnKey;raiseOpen=false;raiseVal=S.minRaiseTo}
+ const newHand=S.hand!==prevHand,bd=S.board.length;
+ let board='';for(let i=0;i<5;i++)board+=S.board[i]!==undefined?card(S.board[i],(newHand?i<bd:i>=prevBoard)?'in':''):'<div class="c e"></div>';
+ const myWin=sd&&sd.pots.some(x=>x.winners.includes(S.me));
+ let msg='';if(sd){msg=sd.pots.map(x=>x.winners.map(id=>esc(S.players.find(p=>p.id===id).name)).join(' и ')+' · +'+x.amount+(x.hand?' · '+esc(x.hand):'')).join('<br>')}
+ else if(S.stage&&S.toAct&&S.toAct!==S.me){const w=S.players.find(p=>p.id===S.toAct);msg='<span style="color:var(--s)">Ходит '+esc(w.name)+'</span>'}
+ else if(myTurn)msg='<span style="color:var(--a)">Ваш ход</span>';
+ const stageN={preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Вскрытие'}[S.stage]||'';
+ const mc=me?Math.max(0,S.toCall):0;
+ let acts='';
+ if(myTurn&&me){const maxTo=me.bet+me.chips,canRaise=me.chips>S.toCall,callLab=S.toCall<=0?'Чек':(S.toCall>=me.chips?'Олл-ин '+me.chips:'Колл '+S.toCall);
+   const minTo=Math.min(S.minRaiseTo,maxTo);if(raiseVal<minTo)raiseVal=minTo;if(raiseVal>maxTo)raiseVal=maxTo;
+   acts=`<div class="bar"><i id="tb"></i></div>`+(raiseOpen&&canRaise?`<div class="rp"><div class="lab" style="text-align:center">ПОВЫСИТЬ ДО</div><div class="big" id="rv">${raiseVal}</div>
+    <input type="range" id="rs" min="${minTo}" max="${maxTo}" step="1" value="${raiseVal}">
+    <div class="q"><button data-q="h">½ банка</button><button data-q="p">Банк</button><button data-q="a">Олл-ин</button></div>
+    <div class="row"><button class="btn" id="rc">Отмена</button><button class="btn pri" id="rok">Повысить</button></div></div>`:
+   `<div class="row"><button class="btn red" id="fd">Сбросить</button><button class="btn pri" id="cl">${callLab}</button>${canRaise?'<button class="btn wh" id="rz">Повысить</button>':''}</div>`)}
+ else if(S.phase==='play'){acts=`<div class="row"><button class="btn" disabled>Сбросить</button><button class="btn" disabled>Колл</button><button class="btn" disabled>Повысить</button></div>`}
+ const info=me?(me.out?'Вы вышли из игры':me.folded?'Вы сбросили карты':''):'';
+ app.innerHTML=`<div class="top"><span>Раздача ${S.hand} · ${stageN}</span><span>Блайнды ${S.blinds.sb}/${S.blinds.bb}</span>${S.host===S.me?'<button class="link" id="em">Завершить</button>':'<span></span>'}</div>
+ <div class="opps">${opps.map(oppHtml).join('')}</div>
+ <div class="table"><div class="lab">БАНК</div><div class="pot">${S.pot}</div><div class="board">${board}</div><div class="msg ${sd?'w':''}">${msg||'&nbsp;'}</div></div>
+ <div class="me"><div class="hn">${esc(S.myHand||'')}</div><div class="hole ${myWin?'win':''}">${S.myHole.length?S.myHole.map(c=>card(c,newHand?'in':'')).join(''):''}</div>
+  <div class="mi"><b>${me?esc(me.name):''}</b> · ${me?fmt(me.chips):0} за столом${me&&me.bet?' · ставка '+me.bet:''}${S.dealer===S.me?' · дилер':''}</div><div class="mi">${info}</div></div>
+ <div class="acts">${acts}</div>`;
+ prevBoard=bd;prevHand=S.hand;
+ const g=id=>$(id);
+ if(g('fd'))g('fd').onclick=()=>{hap('medium');post('/api/act',{code:S.code,action:'fold'})};
+ if(g('cl'))g('cl').onclick=()=>{hap();post('/api/act',{code:S.code,action:S.toCall<=0?'check':'call'})};
+ if(g('rz'))g('rz').onclick=()=>{raiseOpen=true;render()};
+ if(g('rc'))g('rc').onclick=()=>{raiseOpen=false;render()};
+ if(g('rok'))g('rok').onclick=()=>{hap('medium');post('/api/act',{code:S.code,action:'raise',amount:raiseVal})};
+ if(g('rs'))g('rs').oninput=e=>{raiseVal=+e.target.value;g('rv').textContent=raiseVal};
+ document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const s=g('rs'),mn=+s.min,mx=+s.max,q=b.dataset.q;let v=q==='a'?mx:Math.round((q==='h'?S.pot/2:S.pot)/10)*10+S.currentBet;raiseVal=Math.max(mn,Math.min(mx,v));s.value=raiseVal;g('rv').textContent=raiseVal});
+ if(g('em'))g('em').onclick=()=>{const go=()=>post('/api/end',{code:S.code});tg&&tg.showConfirm?tg.showConfirm('Завершить матч для всех?',ok=>ok&&go()):confirm('Завершить матч для всех?')&&go()};
+ tickBars()}
+function tickBars(){if(!S||S.phase!=='play')return;const r=remain(),f=Math.max(0,Math.min(1,r/S.turnMs));
+ document.querySelectorAll('.bar i').forEach(i=>{i.style.width=(f*100)+'%';i.style.background=f<.25?'var(--r)':'var(--a)'})}
+setInterval(tickBars,250);
+function render(){if(!S)return home();if(S.phase==='lobby')lobby();else if(S.phase==='end')end();else play()}
+(async()=>{await cfg();if(INIT)await loadMe();const r=(qs.get('room')||'').toUpperCase();
+ if(r&&INIT){const j=await post('/api/join',{code:r});if(j)return connect(r)}
+ home()})();
+</script></body></html>
