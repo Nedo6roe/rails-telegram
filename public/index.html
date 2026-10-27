@@ -1,437 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Рельсы и дороги</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Покер</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:#dfe9f2;--paper:#f6fafd;--ink:#1d2a36;--mut:#5d7183;--acc:#c4533d;--ok:#2f8f5b;--line:#9db4c7}
-@media (prefers-color-scheme:dark){:root{--bg:#14202b;--paper:#1c2b39;--ink:#e6eef5;--mut:#93a8ba;--acc:#e0705a;--ok:#4cc486;--line:#3a5166}}
-*{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",Verdana,sans-serif;padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom));display:flex;justify-content:center}
-.wrap{width:100%;max-width:460px}.view{display:none}
-h1{font-size:18px;margin:2px 0 8px;display:flex;justify-content:space-between;align-items:baseline}
-h1 span{font-size:14px;color:var(--mut);font-weight:normal}
-#board,#tray,#sp,#tbl{--paper:#eaf2f9}
-#board{display:grid;grid-template-columns:22px repeat(7,1fr) 22px;grid-template-rows:22px repeat(7,1fr) 22px;background:radial-gradient(ellipse at 15% 10%,#f4f9fd,transparent 50%),radial-gradient(ellipse at 85% 80%,#9fc3df,transparent 55%),#c9deee;border-radius:14px;padding:6px;aspect-ratio:1}
-.c{position:relative;border:1px solid rgba(30,50,70,.28);overflow:hidden;min-width:0;min-height:0}
-.c svg,.x svg{display:block;width:100%;height:100%}.x{min-width:0;min-height:0}
-.c.bt{border-top:3px solid #111}.c.bb{border-bottom:3px solid #111}.c.bl{border-left:3px solid #111}.c.br{border-right:3px solid #111}
-.c.mt{border-top:2px solid #c4533d}.c.mb{border-bottom:2px solid #c4533d}.c.ml{border-left:2px solid #c4533d}.c.mr{border-right:2px solid #c4533d}
-.c.ok::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:var(--ok);opacity:.6}
-.c.gok{outline:3px solid var(--ok);outline-offset:-3px}.c.gbad{outline:3px solid var(--acc);outline-offset:-3px;background:rgba(196,83,61,.2)}.c.gok::after,.c.gbad::after{display:none}
-#board.b3{display:block;position:relative;padding:0;background:#bfd9ee;overflow:hidden;touch-action:none}
-#tray,#sp{display:flex;gap:8px;margin:8px 0}#sp{gap:6px;margin-top:0}
-.d{flex:1;aspect-ratio:1;min-width:0;background:var(--paper);border:2px solid #222;border-radius:8px;padding:0;cursor:pointer;overflow:hidden}
-.d svg{width:100%;height:100%;display:block}.d.sel{border-color:#c4533d;box-shadow:0 0 0 2px #c4533d}.d.used{opacity:.25}
-#sp .d{border-width:1px;border-radius:6px}
-#spl{font-size:12px;color:var(--mut);margin:6px 0 4px}
-.row{display:flex;gap:8px;margin-bottom:8px}
-button.b{flex:1;font:inherit;font-size:15px;padding:11px 4px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;touch-action:manipulation}
-button.b.main{background:var(--acc);border-color:var(--acc);color:#fff}button.b:disabled{opacity:.4}
-#msg,#err{min-height:30px;font-size:13px;color:var(--acc);margin:2px 0}
-#sc,.box{background:var(--paper);border-radius:10px;padding:8px 12px;font-size:14px;margin-bottom:8px}
-#sc div{display:flex;justify-content:space-between;padding:2px 0}
-#sc .t{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;font-weight:bold;font-size:17px}
-#tbl{display:grid;grid-template-columns:repeat(11,1fr);font-size:12px;text-align:center;margin-top:8px;background:#eaf2f9;color:#222;border:1px solid #6b7f90;border-radius:6px;overflow:hidden}
-#pl{display:flex;gap:6px;flex-wrap:wrap;font-size:13px;margin-bottom:6px}
-#pl span,.pp span{padding:3px 9px;border-radius:12px;background:var(--paper);border:1px solid var(--line)}#pl .dn{color:var(--ok);border-color:var(--ok)}
-.pp{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-.in{width:100%;font:inherit;font-size:16px;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);text-transform:uppercase}
-.code{font-size:34px;letter-spacing:6px;text-align:center;font-weight:bold;margin:6px 0}
-#wait{display:none}
-table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0 14px}th,td{padding:7px 3px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}tr.me td{font-weight:bold;color:var(--acc)}
-</style></head><body><div class="wrap">
-
-<div class="view" id="v-home">
-  <h1>Рельсы и дороги</h1>
-  <p>Игра для 1–5 человек. У каждого своё поле, фишки у всех одинаковые. Всего 7 раундов.</p>
-  <div class="row"><button class="b main" id="mk">Создать игру</button></div>
-  <p>Или войдите по коду друга:</p>
-  <div class="row"><input class="in" id="cd" maxlength="4" placeholder="Код"><button class="b" id="jn" style="flex:0 0 40%">Войти</button></div>
-  <div id="err"></div>
-</div>
-
-<div class="view" id="v-lobby">
-  <h1>Ожидание игроков</h1>
-  <div class="code" id="lc"></div>
-  <div class="pp" id="lp"></div>
-  <div class="row"><button class="b" id="inv">Пригласить друзей</button></div>
-  <div class="row"><button class="b main" id="st">Начать игру</button></div>
-  <div id="lw" style="font-size:13px;color:var(--mut)"></div>
-</div>
-
-<div class="view" id="v-game">
-  <h1>Рельсы и дороги <span id="rd"></span></h1>
-  <div id="pl"></div>
-  <div id="board"></div>
-  <div id="msg"></div>
-  <div id="tray"></div>
-  <div id="spl"></div>
-  <div id="sp"></div>
-  <div class="row"><button class="b" id="rot">Повернуть</button><button class="b" id="flip">Отразить</button><button class="b main" id="place">Поставить</button></div>
-  <div class="row"><button class="b" id="undo">Отмена</button><button class="b main" id="next">Подтвердить раунд</button></div>
-  <div class="row" id="endrow" style="display:none"><button class="b" id="endm">Завершить матч</button></div>
-  <div class="box" id="wait"><div id="wt"></div><div class="row" style="margin:8px 0 0"><button class="b" id="skip">Не ждать остальных</button></div></div>
-  <div id="sc"></div>
-  <div id="tbl"></div>
-</div>
-
-<div class="view" id="v-end">
-  <h1>Итоги</h1>
-  <p id="win"></p>
-  <table id="rt"></table>
-  <div class="row"><button class="b main" id="again">Новая игра</button></div>
-</div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/game.js"></script>
+:root{--bg:#000;--p:#1c1c1e;--p2:#2c2c2e;--t:#fff;--s:#8e8e93;--a:#0a84ff;--r:#ff453a;--g:#30d158;--y:#ffd60a;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.wrap{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
+h1{font-size:34px;margin:8px 0 4px;letter-spacing:-.5px}
+.sub{color:var(--s);font-size:15px;margin:0 0 22px}
+.card-p{background:var(--p);border-radius:22px;padding:18px}
+.btn{height:50px;border-radius:25px;padding:0 22px;font-size:16px;font-weight:600;background:var(--p2);transition:transform .08s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--a)}.btn.wh{background:#fff;color:#000}.btn.red{background:#3a1f21;color:var(--r)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.row{display:flex;gap:10px}.row>*{flex:1}
+input{width:100%;height:50px;border-radius:14px;border:0;background:var(--p2);color:#fff;font:inherit;font-size:18px;text-align:center;letter-spacing:4px;text-transform:uppercase;outline:none}
+.code{font-size:44px;font-weight:700;letter-spacing:8px;text-align:center;margin:6px 0 2px}
+.pl{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #2c2c2e}.pl:first-child{border-top:0}
+.av{width:44px;height:44px;border-radius:50%;background:var(--p2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;flex:none}
+.top{display:flex;justify-content:space-between;align-items:center;color:var(--s);font-size:13px;padding:2px 4px 10px}
+.opps{display:flex;justify-content:center;gap:14px;min-height:118px}
+.op{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;min-width:0;width:80px;position:relative}
+.op .av{width:48px;height:48px;border:3px solid transparent;position:relative}
+.op.turn .av{border-color:var(--a)}.op.win .av{border-color:var(--g)}
+.op.dim{opacity:.4}
+.op .nm{font-weight:600;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.op .ch{color:var(--y)}.op .st{color:var(--s);min-height:15px;font-size:11px;text-align:center}
+.dbtn{position:absolute;top:-4px;right:-6px;width:20px;height:20px;border-radius:50%;background:#fff;color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.bar{height:3px;border-radius:2px;background:#2c2c2e;width:44px;overflow:hidden;margin-top:2px}.bar i{display:block;height:100%;width:100%;background:var(--a)}
+.mini{display:flex;gap:2px}.mc{width:20px;height:28px;border-radius:4px;background:#2b4a8b;border:1px solid #4a6ab0}
+.mc.f{background:#f2f2f7;color:#000;font-size:10px;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:0}
+.red{color:var(--r)}
+.table{background:var(--p);border-radius:26px;padding:16px 10px 14px;margin:8px 0;text-align:center}
+.lab{font-size:12px;color:var(--s);letter-spacing:1px}
+.pot{font-size:30px;font-weight:700;margin:2px 0 12px}
+.board{display:flex;gap:6px;justify-content:center}
+.c{width:52px;height:74px;border-radius:9px;background:#f2f2f7;color:#1c1c1e;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,.5);flex:none}
+.c b{font-size:20px;line-height:1}.c span{font-size:26px;line-height:1.1}.c.r{color:var(--r)}
+.c.e{background:var(--p2);box-shadow:none}
+.c.in{animation:deal .35s ease-out both}
+@keyframes deal{from{opacity:0;transform:translateY(-14px) scale(.9)}to{opacity:1;transform:none}}
+.msg{min-height:22px;margin-top:12px;font-size:14px;font-weight:600}
+.msg.w{color:var(--g)}
+.me{display:flex;flex-direction:column;align-items:center;margin:6px 0 4px}
+.hole{display:flex;gap:0;margin:2px 0 6px;height:112px}
+.hole .c{width:70px;height:100px}.hole .c b{font-size:26px}.hole .c span{font-size:34px}
+.hole .c:first-child{transform:rotate(-6deg) translateX(8px)}.hole .c:last-child{transform:rotate(6deg) translateX(-8px)}
+.hole.win .c{box-shadow:0 0 0 3px var(--g)}
+.mi{font-size:14px;color:var(--s)}.mi b{color:#fff}.hn{font-size:15px;font-weight:600;color:var(--y);min-height:20px;margin-bottom:2px}
+.acts{margin-top:auto;padding-top:8px;position:sticky;bottom:0;background:linear-gradient(transparent,#000 14px)}
+.acts .bar{width:100%;height:4px;margin:0 0 10px}
+.rp{background:var(--p);border-radius:20px;padding:14px;margin-bottom:10px}
+.rp .big{font-size:28px;font-weight:700;text-align:center}
+input[type=range]{height:30px;letter-spacing:0;background:none;accent-color:var(--a)}
+.q{display:flex;gap:8px;margin:6px 0 10px}.q button{flex:1;height:36px;border-radius:18px;background:var(--p2);font-size:13px}
+.toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:#3a1f21;color:#ff9f98;padding:10px 16px;border-radius:14px;font-size:14px;z-index:9;max-width:90%}
+.link{color:var(--a);background:none;font-size:13px;padding:4px}
+.res{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #2c2c2e;font-size:17px}.res:first-child{border-top:0}
+.res .n{width:26px;color:var(--s);font-weight:600}.res .z{margin-left:auto;color:var(--y);font-weight:600}
+</style></head><body><div class="wrap" id="app"></div>
 <script>
-// Объёмное поле и 3D-город (Three.js). Если что-то не работает, игра сама вернётся к плоскому полю.
-function make3D(el){
-if(!window.THREE)return null;
-try{
-const T=THREE,N=7;
-const renderer=new T.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-const cv=renderer.domElement;cv.style.cssText='display:block;width:100%;height:100%;touch-action:none';
-el.appendChild(cv);el.classList.add('b3');
-const scene=new T.Scene();scene.background=new T.Color(0x070d1f);scene.fog=new T.Fog(0x0b1530,22,64);
-const cam=new T.PerspectiveCamera(42,1,0.1,220);
-let az=0,pol=0.95,dist=18;
-const place=()=>{cam.position.set(dist*Math.sin(pol)*Math.sin(az),dist*Math.cos(pol),dist*Math.sin(pol)*Math.cos(az));cam.lookAt(0,0,0)};
-scene.add(new T.HemisphereLight(0x8fb0ff,0x2a3a55,0.6));
-const sun=new T.DirectionalLight(0xc8d8ff,0.35);sun.position.set(-6,12,8);scene.add(sun);
-const lg=new T.DirectionalLight(0x3dffa0,0.9);lg.position.set(-9,6,-7);scene.add(lg);
-const lv=new T.DirectionalLight(0xa070ff,0.7);lv.position.set(9,5,7);scene.add(lv);
-const need=()=>{};
-
-const M=c=>new T.MeshLambertMaterial({color:c});
-const mat={slab:M(0xdde7ee),cell:M(0xf2f6f9),mid:M(0xe2ecf3),asp:new T.MeshStandardMaterial({color:0x2b3138,roughness:0.35,metalness:0.25}),line:M(0xf4f4f0),bal:M(0xb8b2a4),rail:new T.MeshStandardMaterial({color:0x8a9098,roughness:0.3,metalness:0.6}),tie:M(0x6d4b30),st:M(0x3d6fa8),roof:M(0xc4533d),pil:M(0x8a949c),red:M(0xc4533d),ground:M(0x727b84),grass:M(0x8fb38a),trunk:M(0x6d4b30),leaf:M(0x4f8a52),
- ok:new T.MeshBasicMaterial({color:0x2f8f5b,transparent:true,opacity:0.55}),bad:new T.MeshBasicMaterial({color:0xc4533d,transparent:true,opacity:0.55}),hint:new T.MeshBasicMaterial({color:0x2f8f5b,transparent:true,opacity:0.5})};
-const gc=new Map();
-const geo=(w,h,d)=>{const k=w+','+h+','+d;let g=gc.get(k);if(!g){g=new T.BoxGeometry(w,h,d);gc.set(k,g)}return g};
-const box=(w,h,d,m,x,y,z)=>{const o=new T.Mesh(geo(w,h,d),m);o.position.set(x,y,z);return o};
-const DX=[0,1,0,-1],DZ=[-1,0,1,0];
-function leg(g,d,w,h,off,len,m,y){const cx=DX[d]*(off+len/2),cz=DZ[d]*(off+len/2);g.add(d%2===0?box(w,h,len,m,cx,y,cz):box(len,h,w,m,cx,y,cz))}
-
-const tc=new Map();
-function tileTpl(e,st){
-  const k=e.join('')+(st?'s':'');let t=tc.get(k);if(t)return t;
-  const g=new T.Group();
-  const over=!!e[0]&&!!e[1]&&e[0]!==e[1]&&e[0]===e[2]&&e[1]===e[3];
-  const hasR=e.includes(1),hasL=e.includes(2),ry=0.085;
-  for(let d=0;d<4;d++){
-    if(e[d]===2){
-      leg(g,d,0.3,0.04,0,0.5,mat.bal,0.08);
-      for(const s of[-1,1]){const o=s*0.08;g.add(d%2===0?box(0.025,0.03,0.5,mat.rail,o,0.115,DZ[d]*0.25):box(0.5,0.03,0.025,mat.rail,DX[d]*0.25,0.115,o))}
-      for(let i=0;i<4;i++){const p=0.07+i*0.12;g.add(d%2===0?box(0.2,0.025,0.04,mat.tie,0,0.105,DZ[d]*p):box(0.04,0.025,0.2,mat.tie,DX[d]*p,0.105,0))}}
-    if(e[d]===1){
-      const off=over?0.3:0,len=over?0.2:0.5;
-      leg(g,d,0.44,0.05,off,len,mat.asp,ry);
-      for(let i=0;i<2;i++){const p=0.12+i*0.22;if(over&&p<0.3)continue;g.add(d%2===0?box(0.03,0.01,0.1,mat.line,0,ry+0.03,DZ[d]*p):box(0.1,0.01,0.03,mat.line,DX[d]*p,ry+0.03,0))}}}
-  if(hasL)g.add(box(0.3,0.04,0.3,mat.bal,0,0.08,0));
-  if(over){
-    const zAxis=e[0]===1,a=Math.atan(0.115/0.1);
-    g.add(zAxis?box(0.44,0.05,0.4,mat.asp,0,0.2,0):box(0.4,0.05,0.44,mat.asp,0,0.2,0));
-    for(const s of[-1,1]){
-      const r=zAxis?box(0.44,0.05,0.152,mat.asp,0,0.1425,s*0.25):box(0.152,0.05,0.44,mat.asp,s*0.25,0.1425,0);
-      if(zAxis)r.rotation.x=s*a;else r.rotation.z=-s*a;g.add(r)}
-    for(const sx of[-1,1])for(const sz of[-1,1])g.add(box(0.05,0.18,0.05,mat.pil,sx*0.17,0.1,sz*0.17));
-  }else if(hasR)g.add(box(0.44,0.05,0.44,mat.asp,0,ry,0));
-  if(hasR&&hasL&&!over){g.add(box(0.3,0.2,0.3,mat.st,0,0.18,0));g.add(box(0.36,0.04,0.36,mat.roof,0,0.3,0))}
-  tc.set(k,g);return g}
-
-const stat=new T.Group(),dyn=new T.Group();scene.add(stat,dyn);
-stat.add(box(9.4,0.3,9.4,mat.slab,0,-0.15,0));
-for(let r=-1;r<=N;r++)for(let c=-1;c<=N;c++){const mid=r>=2&&r<=4&&c>=2&&c<=4;stat.add(box(0.96,0.06,0.96,mid?mat.mid:mat.cell,c-3,0.03,r-3))}
-for(const s of[-1,1]){stat.add(box(3.05,0.03,0.05,mat.red,0,0.075,s*1.5));stat.add(box(0.05,0.03,3.05,mat.red,s*1.5,0.075,0))}
-const exitAt=(r,c,d)=>{if((d===0&&r===0||d===2&&r===N-1)&&c%2===1)return[1,2,1][(c-1)/2];if((d===3&&c===0||d===1&&c===N-1)&&r%2===1)return[2,1,2][(r-1)/2];return 0};
-function exitMark(r,c,e,dx,dz){const g=tileTpl(e,0).clone();g.position.set(c-3,0.0,r-3);stat.add(g);
-  const m=box(0.2,0.05,0.2,mat.red,c-3+dx*0.3,0.13,r-3+dz*0.3);m.rotation.y=Math.PI/4;stat.add(m)}
-for(let c=1;c<N;c+=2){exitMark(-1,c,[0,0,exitAt(0,c,0),0],0,-1);exitMark(N,c,[exitAt(N-1,c,2),0,0,0],0,1)}
-for(let r=1;r<N;r+=2){exitMark(r,-1,[0,exitAt(r,0,3),0,0],-1,0);exitMark(r,N,[0,0,0,exitAt(r,N-1,1)],1,0)}
-
-// ночной лес, северное сияние, избушки и звёзды вокруг поля
-const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-const R=rng(11),GY=-0.31,anim=[];
-const gnd=new T.Mesh(new T.PlaneGeometry(160,160),new T.MeshLambertMaterial({color:0x8fa3bd,emissive:0x16213a}));gnd.rotation.x=-Math.PI/2;gnd.position.y=GY;scene.add(gnd);
-const cabins=[[6.8,4.8,-0.5],[-6.8,5.2,0.5],[-5,-7,3.4],[5.5,-7.2,2.8]],flames=[],fireLights=[];
-for(const[cx,cz,ry]of cabins){const g=new T.Group();
-  g.add(box(1.5,0.9,1.1,M(0x6b4a32),0,GY+0.45,0));
-  const roof=new T.Mesh(new T.ConeGeometry(1.15,0.7,4),M(0x2f2420));roof.rotation.y=Math.PI/4;roof.position.set(0,GY+1.25,0);roof.scale.set(1.15,1,0.85);g.add(roof);g.add(box(0.18,0.45,0.18,M(0x3a2f2a),0.45,GY+1.2,-0.15));
-  const wm=new T.MeshBasicMaterial({color:0xffcf70});
-  for(const wx of[-0.4,0.4]){const w=new T.Mesh(new T.PlaneGeometry(0.28,0.28),wm);w.position.set(wx,GY+0.5,0.56);g.add(w)}
-  const fx=0,fz=1.9;
-  const logM=M(0x4a3020),stM=M(0x6a7482);
-  for(let i=0;i<3;i++){const lg2=new T.Mesh(new T.CylinderGeometry(0.04,0.04,0.4,6),logM);lg2.rotation.z=Math.PI/2;lg2.rotation.y=i*1.05;lg2.position.set(fx,GY+0.06,fz);g.add(lg2)}
-  for(let i=0;i<8;i++){const a=i*0.785,st=new T.Mesh(new T.SphereGeometry(0.07,6,5),stM);st.position.set(fx+Math.cos(a)*0.3,GY+0.04,fz+Math.sin(a)*0.3);g.add(st)}
-  const f1=new T.Mesh(new T.ConeGeometry(0.17,0.5,7),new T.MeshBasicMaterial({color:0xff8a2a}));f1.position.set(fx,GY+0.34,fz);g.add(f1);
-  const f2=new T.Mesh(new T.ConeGeometry(0.1,0.34,7),new T.MeshBasicMaterial({color:0xffd75a}));f2.position.set(fx,GY+0.26,fz);g.add(f2);
-  flames.push(f1,f2);
-  const fl=new T.PointLight(0xff9a40,1.1,8,2);fl.position.set(fx,GY+0.6,fz);g.add(fl);fireLights.push(fl);
-  const coats=[0xc4533d,0x3d6fa8,0x5a9a52,0xd9a441];
-  for(let i=0;i<3;i++){const a=2.2+i*0.95,px=fx+Math.cos(a)*0.62,pz=fz+Math.sin(a)*0.62;
-    const p=new T.Group();
-    const body=new T.Mesh(new T.CylinderGeometry(0.06,0.1,0.28,8),M(coats[(i+cabins.length)%4]));body.position.y=GY+0.14;p.add(body);
-    const head=new T.Mesh(new T.SphereGeometry(0.075,10,8),M(0xf0c8a0));head.position.y=GY+0.36;p.add(head);
-    const hat=new T.Mesh(new T.ConeGeometry(0.085,0.13,8),M(coats[(i+2)%4]));hat.position.y=GY+0.47;p.add(hat);
-    p.position.set(px,0,pz);g.add(p)}
-  g.position.set(cx,0,cz);g.rotation.y=ry;scene.add(g)}
-const CNT=520,layers=[[0.9,1.1,0.75],[0.7,1.0,1.45],[0.5,0.9,2.05]];
-const lm=layers.map(([r,h])=>new T.InstancedMesh(new T.ConeGeometry(r,h,7),new T.MeshLambertMaterial({color:0xffffff}),CNT));
-const tm=new T.InstancedMesh(new T.CylinderGeometry(0.09,0.12,0.5,5),new T.MeshLambertMaterial({color:0x4a3626}),CNT);
-{const d=new T.Object3D(),col=new T.Color();let n=0,tries=0;
- while(n<CNT&&tries++<5000){
-  const ang=R()*6.2832,rad=6.4+Math.pow(R(),0.85)*16,x=Math.cos(ang)*rad,z=Math.sin(ang)*rad;
-  if(cabins.some(c=>Math.hypot(c[0]-x,c[1]-z)<3.6)||Math.abs(rad-12)<1.3||Math.hypot(x+17,z+4)<4.2||Math.hypot(x+9,z+4.5)<1.6)continue;
-  const s=0.7+R()*0.6+(rad>12?0.3:0);
-  d.rotation.set(0,R()*6,0);d.scale.set(s,s,s);d.position.set(x,GY+0.25*s,z);d.updateMatrix();tm.setMatrixAt(n,d.matrix);
-  const hue=0.38+R()*0.06,lt=0.12+R()*0.07;
-  layers.forEach((l,k)=>{d.position.set(x,GY+l[2]*s,z);d.updateMatrix();lm[k].setMatrixAt(n,d.matrix);col.setHSL(hue,0.45,lt+(k===2?0.14:k===1?0.05:0));lm[k].setColorAt(n,col)});
-  n++}
- for(const m of lm){m.frustumCulled=false;m.count=n;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;scene.add(m)}
- tm.frustumCulled=false;tm.count=n;tm.instanceMatrix.needsUpdate=true;scene.add(tm)}
-const au={time:{value:0}};
-const aurora=new T.Mesh(new T.CylinderGeometry(22,22,24,128,1,true),new T.ShaderMaterial({uniforms:au,transparent:true,depthWrite:false,blending:T.AdditiveBlending,side:T.DoubleSide,
- vertexShader:'uniform float time;varying vec2 vUv;void main(){vUv=uv;vec3 p=position;float w=sin(uv.x*25.0+time*0.5)*1.2+sin(uv.x*9.0-time*0.3)*2.0;p.x+=w*normal.x;p.z+=w*normal.z;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);}',
- fragmentShader:'uniform float time;varying vec2 vUv;void main(){float a=vUv.x*6.2832;float cur=0.5+0.5*sin(a*3.0+sin(time*0.15+a)*2.0);cur=pow(cur,1.5);float rays=0.65+0.35*sin(a*60.0+time*0.7+sin(a*7.0)*3.0);float v=smoothstep(0.0,0.12,vUv.y)*pow(1.0-vUv.y,1.6);vec3 g=vec3(0.15,1.0,0.55);vec3 p=vec3(0.55,0.3,1.0);vec3 b=vec3(0.1,0.8,0.9);vec3 c=mix(mix(g,b,smoothstep(0.1,0.5,vUv.y)),p,smoothstep(0.5,0.95,vUv.y));gl_FragColor=vec4(c,cur*rays*v*0.95);}'}));
-aurora.position.y=GY+12;scene.add(aurora);
-{const sp=new Float32Array(900);for(let i=0;i<300;i++){const a=R()*6.2832,e=0.12+R()*1.3,r=95;sp[i*3]=Math.cos(a)*Math.cos(e)*r;sp[i*3+1]=Math.sin(e)*r;sp[i*3+2]=Math.sin(a)*Math.cos(e)*r}
- const sg=new T.BufferGeometry();sg.setAttribute('position',new T.BufferAttribute(sp,3));scene.add(new T.Points(sg,new T.PointsMaterial({color:0xffffff,size:1.8,sizeAttenuation:false,fog:false})))}
-const moon=new T.Mesh(new T.SphereGeometry(3,16,12),new T.MeshBasicMaterial({color:0xeef3ff,fog:false}));moon.position.set(-45,55,-60);scene.add(moon);
-// живая обстановка: снег, дым, искры, падающие звёзды, звери, сова и ледяное озеро
-function pset(n,color,size,op,add){const pos=new Float32Array(n*3),g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pos,3));
-  const p=new T.Points(g,new T.PointsMaterial({color,size,sizeAttenuation:false,transparent:true,opacity:op,depthWrite:false,fog:false,blending:add?T.AdditiveBlending:T.NormalBlending}));
-  p.frustumCulled=false;scene.add(p);return{pos,a:g.attributes.position}}
-const SN=700,sn=pset(SN,0xffffff,2.2,0.85,false),sv=[];
-for(let i=0;i<SN;i++){sn.pos[i*3]=(R()-0.5)*44;sn.pos[i*3+1]=GY+R()*20;sn.pos[i*3+2]=(R()-0.5)*44;sv.push(0.5+R()*0.9)}
-anim.push((s,dt)=>{for(let i=0;i<SN;i++){let y=sn.pos[i*3+1]-sv[i]*dt;if(y<GY)y=GY+20;sn.pos[i*3+1]=y;sn.pos[i*3]+=Math.sin(s*0.7+i)*dt*0.25}sn.a.needsUpdate=true});
-const SM=cabins.length*14,sm=pset(SM,0xaab4c4,5,0.3,false),SK=cabins.length*8,sk=pset(SK,0xffa940,3,0.9,true);
-anim.push(s=>{cabins.forEach(([cx,cz,ry],c)=>{
-  const bx=cx+0.45*Math.cos(ry)-0.15*Math.sin(ry),bz=cz-0.45*Math.sin(ry)-0.15*Math.cos(ry);
-  for(let k=0;k<14;k++){const a=(s*0.3+k/14)%1,i=(c*14+k)*3;sm.pos[i]=bx+a*0.9+Math.sin(a*6+k)*0.1;sm.pos[i+1]=GY+1.5+a*2.4;sm.pos[i+2]=bz+Math.cos(a*5+k)*0.1}
-  const fx=cx+1.9*Math.sin(ry),fz=cz+1.9*Math.cos(ry);
-  for(let k=0;k<8;k++){const a=(s*1.1+k/8)%1,i=(c*8+k)*3;sk.pos[i]=fx+Math.sin(k*7)*0.25*a;sk.pos[i+1]=GY+0.35+a*1.7;sk.pos[i+2]=fz+Math.cos(k*5)*0.25*a}});
-  sm.a.needsUpdate=true;sk.a.needsUpdate=true});
-{const g=new T.BufferGeometry(),pos=new Float32Array(6);g.setAttribute('position',new T.BufferAttribute(pos,3));
- const m=new T.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0,fog:false}),l=new T.Line(g,m);l.frustumCulled=false;scene.add(l);
- let t0=0,next=3,S0=null,D0=null;
- anim.push(s=>{if(!S0&&s>next){const a=R()*6.28,b=a+1.57+(R()-0.5)*0.6;S0=[Math.cos(a)*70,45+R()*25,Math.sin(a)*70];D0=[Math.cos(b)*0.7,-0.35,Math.sin(b)*0.7];t0=s}
-  if(S0){const p=(s-t0)/1.1;if(p>=1){S0=null;m.opacity=0;next=s+5+R()*8;return}
-   const k=p*55;pos.set([S0[0]+D0[0]*k,S0[1]+D0[1]*k,S0[2]+D0[2]*k,S0[0]+D0[0]*(k-9),S0[1]+D0[1]*(k-9),S0[2]+D0[2]*(k-9)]);g.attributes.position.needsUpdate=true;m.opacity=1-p}})}
-function deer(sc,col){const g=new T.Group(),m=M(col);
-  g.add(box(0.6,0.26,0.22,m,0,0.45,0));
-  const nk=box(0.1,0.34,0.1,m,0.3,0.62,0);nk.rotation.z=-0.5;g.add(nk);
-  g.add(box(0.2,0.12,0.12,m,0.46,0.78,0));
-  const legs=[];for(const lx of[-0.22,0.22])for(const lz of[-0.07,0.07]){const l=box(0.05,0.34,0.05,m,lx,0.17,lz);g.add(l);legs.push(l)}
-  for(const z of[-0.05,0.05]){const a=new T.Mesh(new T.ConeGeometry(0.03,0.25,4),M(0xd8c8a8));a.position.set(0.44,0.95,z*2);a.rotation.z=0.3;g.add(a)}
-  g.scale.set(sc,sc,sc);g.userData.legs=legs;scene.add(g);return g}
-function fox(){const g=new T.Group(),m=M(0xd8741c);
-  g.add(box(0.36,0.15,0.14,m,0,0.25,0));g.add(box(0.14,0.11,0.11,m,0.23,0.31,0));
-  const tl=box(0.3,0.08,0.08,m,-0.3,0.28,0);tl.rotation.z=0.4;g.add(tl);g.add(box(0.08,0.08,0.09,M(0xf2f2f2),-0.44,0.33,0));
-  const legs=[];for(const lx of[-0.12,0.12])for(const lz of[-0.05,0.05]){const l=box(0.04,0.18,0.04,M(0x2a1e18),lx,0.09,lz);g.add(l);legs.push(l)}
-  g.scale.set(1.3,1.3,1.3);g.userData.legs=legs;scene.add(g);return g}
-const walkers=[[deer(1.5,0x8a6a4a),12.4,0.045,0],[deer(1.3,0x7a5c40),11.6,-0.04,3.1],[fox(),12.0,-0.075,1.7]];
-anim.push(s=>{for(const[g,r,sp,off]of walkers){const th=s*sp+off,d=sp>0?1:-1;
-  g.position.set(Math.cos(th)*r,GY+Math.abs(Math.sin(s*5+off))*0.03,Math.sin(th)*r);
-  g.rotation.y=Math.atan2(-Math.cos(th)*d,-Math.sin(th)*d);
-  g.userData.legs.forEach((l,k)=>{l.rotation.z=Math.sin(s*5+k*1.6+off)*0.4})}});
-{const g=new T.Group();g.add(box(0.28,1.3,0.28,M(0x4a3626),0,GY+0.65,0));
- const ow=new T.Mesh(new T.SphereGeometry(0.15,10,8),M(0x8a7a68));ow.scale.y=1.3;ow.position.y=GY+1.5;g.add(ow);
- const em=new T.MeshBasicMaterial({color:0xffe27a}),eyes=[-0.06,0.06].map(x=>{const e=new T.Mesh(new T.SphereGeometry(0.035,8,6),em);e.position.set(x,GY+1.55,0.12);g.add(e);return e});
- g.position.set(-9,0,-4.5);g.rotation.y=0.9;scene.add(g);
- anim.push(s=>{const b=(s%4.5)<0.15?0.1:1;eyes.forEach(e=>e.scale.y=b)})}
-{const lk=new T.Mesh(new T.CircleGeometry(3,40),new T.MeshStandardMaterial({color:0xbfe6ff,roughness:0.06,metalness:0.8}));lk.rotation.x=-Math.PI/2;lk.position.set(-17,GY+0.02,-4);scene.add(lk)}
-for(const sx of[-1,1])for(const sz of[-1,1]){stat.add(box(0.06,0.9,0.06,M(0x2b3138),sx*4.55,0.45,sz*4.55));const l=new T.Mesh(new T.SphereGeometry(0.13,10,8),new T.MeshBasicMaterial({color:0xffd27a}));l.position.set(sx*4.55,0.98,sz*4.55);stat.add(l)}
-
-// номера раундов
-const nt=new Map();
-function numMat(n){let m=nt.get(n);if(m)return m;const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
-  x.fillStyle='rgba(255,255,255,.85)';x.beginPath();x.arc(32,32,28,0,7);x.fill();x.fillStyle='#1d2a36';x.font='bold 40px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(String(n),32,34);
-  m=new T.MeshBasicMaterial({map:new T.CanvasTexture(c),transparent:true});nt.set(n,m);return m}
-const numGeo=new T.PlaneGeometry(0.2,0.2),discGeo=new T.CircleGeometry(0.13,16);
-
-const o={onTap:null};
-o.update=s=>{
-  while(dyn.children.length)dyn.remove(dyn.children[0]);
-  for(let i=0;i<N*N;i++){const t=s.board[i];if(!t)continue;const r=(i/N)|0,c=i%N;
-    const g=tileTpl(t.e,t.st).clone();g.position.set(c-3,0,r-3);dyn.add(g);
-    if(t.n){const p=new T.Mesh(numGeo,numMat(t.n));p.rotation.x=-Math.PI/2;p.position.set(c-3+0.33,0.18,r-3+0.33);dyn.add(p)}}
-  for(const i of s.hints){if(i===s.ghost)continue;const r=(i/N)|0,c=i%N;const p=new T.Mesh(discGeo,mat.hint);p.rotation.x=-Math.PI/2;p.position.set(c-3,0.1,r-3);dyn.add(p)}
-  if(s.ghost!=null&&s.tile){const r=(s.ghost/N)|0,c=s.ghost%N;
-    const f=box(0.96,0.02,0.96,s.ok?mat.ok:mat.bad,c-3,0.075,r-3);dyn.add(f);
-    const g=tileTpl(s.tile.e,s.tile.st).clone();g.position.set(c-3,0.08,r-3);dyn.add(g)}
-  place();need()};
-
-// управление камерой: тянуть — вращать, щипок — приблизить, короткое касание — выбрать клетку
-const pts=new Map();let moved=0,lastD=0;
-const pd=()=>{const a=[...pts.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1};
-cv.addEventListener('pointerdown',e=>{try{cv.setPointerCapture(e.pointerId)}catch(_){}pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1)moved=0;if(pts.size===2)lastD=pd()});
-cv.addEventListener('pointermove',e=>{const p=pts.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
-  if(pts.size===1){az-=dx*0.006;pol=Math.max(0.2,Math.min(1.3,pol-dy*0.004));moved+=Math.abs(dx)+Math.abs(dy)}
-  else if(pts.size===2){const d=pd();dist=Math.max(8,Math.min(26,dist*lastD/d));lastD=d;moved+=10}
-  place();need()});
-const plane=new T.Plane(new T.Vector3(0,1,0),-0.06),ray=new T.Raycaster(),hit=new T.Vector3(),v2=new T.Vector2();
-function up(e){const was=pts.size===1&&pts.has(e.pointerId);pts.delete(e.pointerId);
-  if(!was||moved>8||e.type==='pointercancel')return;
-  const b=cv.getBoundingClientRect();v2.set((e.clientX-b.left)/b.width*2-1,-((e.clientY-b.top)/b.height*2-1));
-  ray.setFromCamera(v2,cam);if(!ray.ray.intersectPlane(plane,hit))return;
-  const c=Math.floor(hit.x+3.5),r=Math.floor(hit.z+3.5);
-  if(r>=0&&r<N&&c>=0&&c<N&&o.onTap)o.onTap(r*N+c)}
-cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-cv.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(8,Math.min(26,dist*(1+Math.sign(e.deltaY)*0.08)));place();need()},{passive:false});
-const rb=document.createElement('button');rb.textContent='Вид';rb.setAttribute('aria-label','Сбросить вид');
-rb.style.cssText='position:absolute;top:8px;right:8px;font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid rgba(30,50,70,.3);background:rgba(255,255,255,.85);color:#1d2a36;cursor:pointer';
-rb.onclick=()=>{az=0;pol=0.95;dist=18;place();need()};el.appendChild(rb);
-const fit=()=>{const w=el.clientWidth||300,h=el.clientHeight||w;renderer.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();place();need()};
-if(window.ResizeObserver)new ResizeObserver(fit).observe(el);else addEventListener('resize',fit);
-fit();
-let last=0,alive=true;const loop=t=>{if(!alive)return;requestAnimationFrame(loop);if(document.hidden||t-last<33)return;const dt=Math.min(0.1,(t-last)/1000);last=t;au.time.value=t/1000;for(const f of anim)f(t/1000,dt);lg.intensity=0.75+0.35*Math.sin(t/1000*0.6);flames.forEach((f,i)=>{const k=1+0.18*Math.sin(t/90+i*2.3)+0.1*Math.sin(t/47+i);f.scale.set(1,k,1)});fireLights.forEach((l,i)=>{l.intensity=1.0+0.35*Math.sin(t/110+i*1.7)+0.15*Math.sin(t/53)});lv.intensity=0.55+0.3*Math.sin(t/1000*0.45+2);renderer.render(scene,cam)};requestAnimationFrame(loop);
-o.destroy=()=>{alive=false;try{renderer.dispose()}catch(_){}};
-return o
-}catch(err){console.error('3D не запустилось:',err);el.classList.remove('b3');el.innerHTML='';return null}
-}
-</script>
-<script>
-const G=RI,N=G.N,PTS=G.PTS,$=id=>document.getElementById(id);
+const tg=window.Telegram&&Telegram.WebApp;try{tg&&(tg.ready(),tg.expand(),tg.setBackgroundColor&&tg.setBackgroundColor('#000000'),tg.setHeaderColor&&tg.setHeaderColor('#000000'))}catch(_){}
+const $=id=>document.getElementById(id),app=$('app');
+const qs=new URLSearchParams(location.search);
+let INIT=(tg&&tg.initData)||'';
+if(!INIT&&qs.get('dev')){const n=qs.get('dev');INIT='dev:'+encodeURIComponent(n)+':'+encodeURIComponent(n)}
+let W=null,TOP=[],S=null,code=null,es=null,offset=0,raiseOpen=false,raiseVal=0,lastTurnKey='',prevBoard=0,prevHand=-1,toastT=null,botName='';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const tg=window.Telegram&&Telegram.WebApp;if(tg&&tg.initData){tg.ready();tg.expand()}
-const q=new URLSearchParams(location.search);
-let dn=q.get('dev');if(!dn){try{dn=sessionStorage.dv||(sessionStorage.dv='Игрок'+(Math.random()*90+10|0))}catch(e){dn='Игрок'}}
-const INIT=(tg&&tg.initData)||('dev:'+encodeURIComponent(dn)+':'+encodeURIComponent(dn));
-let B3=make3D($('board')),S=null,es=null,CFG={bot:''},board,dice,sps,sel,snaps,spRound,ghost,localRound=null;
-function show(v){for(const x of['home','lobby','game','end'])$('v-'+x).style.display=x===v?'block':'none'}
-function say(t){$('msg').textContent=t||''}
-async function api(p,b){const r=await fetch('/api/'+p,{method:'POST',headers:{'content-type':'application/json','x-init':INIT},body:JSON.stringify(b||{})});
-  let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||'Ошибка связи');return j}
-function connect(code){if(es)es.close();localRound=null;try{localStorage.ri=code}catch(e){}
-  es=new EventSource('/api/events?code='+code+'&init='+encodeURIComponent(INIT));es.onmessage=e=>onState(JSON.parse(e.data))}
-async function enter(code){try{await api('join',{code});connect(code)}catch(e){$('err').textContent=e.message;try{localStorage.removeItem('ri')}catch(_){}show('home')}}
-const isWait=()=>{const m=S&&S.players.find(p=>p.id===S.me);return !!(m&&m.done)};
-const spTotal=()=>sps.filter(x=>x.used).length;
-
-function tileSVG(t){const e=t.e,P=[[50,0],[100,50],[50,100],[0,50]];
-  const paths=ty=>{const ix=[0,1,2,3].filter(d=>e[d]===ty);
-    if(ix.length===2&&(ix[1]-ix[0])%2===1)return [`M${P[ix[0]]} Q50 50 ${P[ix[1]]}`];
-    return ix.map(d=>`M50 50L${P[d]}`)};
-  const R=paths(1),L=paths(2);let s='<svg viewBox="0 0 100 100" fill="none">';
-  s+=L.map(p=>`<path d="${p}" stroke="#111" stroke-width="3"/><path d="${p}" stroke="#111" stroke-width="16" stroke-dasharray="2.5 7"/>`).join('');
-  s+=R.map(p=>`<path d="${p}" stroke="#222" stroke-width="24"/>`).join('');
-  s+=R.map(p=>`<path d="${p}" stroke="#eaf2f9" stroke-width="20"/>`).join('');
-  s+=R.map(p=>`<path d="${p}" stroke="#222" stroke-width="2" stroke-dasharray="7 6"/>`).join('');
-  if(e.includes(1)&&e.includes(2)&&!G.isOver(t))s+='<rect x="38" y="38" width="24" height="24" fill="#111"/>';
-  return s+'</svg>'}
-
-function onState(s){S=s;
-  if(s.phase==='lobby'){show('lobby');$('lc').textContent=s.code;
-    $('lp').innerHTML=s.players.map(p=>`<span>${esc(p.name)}${p.id===s.host?' ★':''}</span>`).join('');
-    const h=s.host===s.me;$('st').style.display=h?'block':'none';$('lw').textContent=h?'Когда все зашли, нажмите «Начать игру».':'Ждём, пока создатель начнёт игру.';return}
-  if(s.phase==='end'){show('end');
-    const r=s.results,tie=r.length>1&&r[0].sc.total===r[1].sc.total&&r[0].sc.errors===r[1].sc.errors;
-    $('win').innerHTML=r.length<2?'Ваш счёт: <b>'+r[0].sc.total+'</b>':tie?'Ничья':'Победитель: <b>'+esc(r[0].name)+'</b>';
-    $('rt').innerHTML='<tr><th>Игрок</th><th>Сети</th><th>Дор.</th><th>Рельсы</th><th>Центр</th><th>Откр.</th><th>Итого</th></tr>'+
-      r.map((p,i)=>`<tr class="${p.id===s.me?'me':''}"><td>${i+1}. ${esc(p.name)}</td><td>${p.sc.nets}</td><td>${p.sc.road}</td><td>${p.sc.rail}</td><td>${p.sc.center}</td><td>−${p.sc.errors}</td><td>${p.sc.total}</td></tr>`).join('');
-    try{localStorage.removeItem('ri')}catch(e){}return}
-  show('game');
-  if(localRound!==s.round){localRound=s.round;
-    board=s.mine.board?s.mine.board.slice():Array(N*N).fill(null);
-    const used=s.mine.spUsed||Array(6).fill(false);
-    sps=G.SP.map((x,k)=>({base:x.base,st:x.st,rot:0,flip:false,used:used[k],sp:1}));
-    dice=s.bases.map(d=>({base:d.base,st:d.st,rot:0,flip:false,used:false}));
-    sel=dice[0];snaps=[];spRound=false;ghost=null;say('')}
-  render()}
-
-function render(){
-  const wait=isWait(),host=S.host===S.me;
-  $('rd').textContent='Раунд '+S.round+' из 7';
-  $('pl').innerHTML=S.players.map(p=>`<span class="${p.done?'dn':''}">${esc(p.name)}${p.done?' ✓':''}</span>`).join('');
-  let h='';
-  if(B3){try{const gt=!wait&&sel&&!sel.used?G.cur(sel):null,hs=[];
-    if(gt)for(let i=0;i<N*N;i++)if(!board[i]&&G.check(board,(i/N)|0,i%N,gt))hs.push(i);
-    const gh=gt&&ghost!=null&&!board[ghost]?ghost:null;
-    B3.update({board,hints:hs,ghost:gh,tile:gh!=null?gt:null,ok:gh!=null&&G.check(board,(gh/N)|0,gh%N,gt)})}
-  catch(err){console.error(err);try{B3.destroy()}catch(_){}B3=null;const bd=$('board');bd.classList.remove('b3');bd.innerHTML='';return render()}}
-  if(!B3)for(let R=0;R<N+2;R++)for(let C=0;C<N+2;C++){
-    const r=R-1,c=C-1;
-    if(r>=0&&r<N&&c>=0&&c<N){const t=board[r*N+c];
-      let cl='c'+(r===0?' bt':'')+(r===N-1?' bb':'')+(c===0?' bl':'')+(c===N-1?' br':'')+(r===2&&c>=2&&c<=4?' mt':'')+(r===4&&c>=2&&c<=4?' mb':'')+(c===2&&r>=2&&r<=4?' ml':'')+(c===4&&r>=2&&r<=4?' mr':'');
-      const isG=!wait&&ghost===r*N+c&&!t&&sel&&!sel.used;
-      if(isG)cl+=G.check(board,r,c,G.cur(sel))?' gok':' gbad';
-      else if(!wait&&!t&&sel&&!sel.used&&G.check(board,r,c,G.cur(sel)))cl+=' ok';
-      h+=`<div class="${cl}" data-i="${r*N+c}">${t?tileSVG(t):isG?tileSVG(G.cur(sel)):''}</div>`}
-    else{let ty=0,sym=[0,0,0,0];
-      if(R===0&&c>=0&&c<N){ty=G.exitAt(0,c,0);sym=[0,0,1,0]}
-      else if(R===N+1&&c>=0&&c<N){ty=G.exitAt(N-1,c,2);sym=[1,0,0,0]}
-      else if(C===0&&r>=0&&r<N){ty=G.exitAt(r,0,3);sym=[0,1,0,0]}
-      else if(C===N+1&&r>=0&&r<N){ty=G.exitAt(r,N-1,1);sym=[0,0,0,1]}
-      h+=`<div class="x">${ty?tileSVG({e:sym.map(v=>v&&ty),st:0}).replace('</svg>','<polygon points="50,22 76,50 50,78 24,50" fill="#c4533d"/></svg>'):''}</div>`}}
-  if(!B3)$('board').innerHTML=h;
-  $('tray').innerHTML=dice.map((d,i)=>`<button class="d${d===sel?' sel':''}${d.used?' used':''}" data-d="${i}">${tileSVG(G.cur(d))}</button>`).join('');
-  $('spl').textContent=`Особые фишки: осталось ${3-spTotal()} из 3, не больше одной за раунд${spRound?' (в этом раунде уже использована)':''}`;
-  $('sp').innerHTML=sps.map((d,i)=>`<button class="d${d===sel?' sel':''}${d.used?' used':''}" data-s="${i}">${tileSVG(G.cur(d))}</button>`).join('');
-  const s=G.score(board),all=dice.every(d=>d.used),stuck=!all&&dice.filter(d=>!d.used).every(d=>!G.canPlace(board,d));
-  $('sc').innerHTML=`<div><span>Сети выходов</span><b>${s.nets}</b></div><div><span>Длиннейшая дорога</span><b>${s.road}</b></div><div><span>Длиннейший рельсовый путь</span><b>${s.rail}</b></div><div><span>Центр</span><b>${s.center}</b></div><div><span>Открытые концы</span><b>−${s.errors}</b></div><div class="t"><span>Итого</span><span>${s.total}</span></div>`;
-  $('next').disabled=wait||!(all||stuck);
-  $('next').textContent=S.round===7?'Завершить игру':'Подтвердить раунд';
-  for(const id of['rot','flip','place','undo'])$(id).disabled=wait||(id==='place'&&!(ghost!=null&&sel&&!sel.used&&!board[ghost]&&G.check(board,(ghost/N)|0,ghost%N,G.cur(sel))));
-  $('wait').style.display=wait?'block':'none';
-  $('wt').textContent='Ждём: '+S.players.filter(p=>!p.done).map(p=>p.name).join(', ');
-  $('skip').style.display=host?'block':'none';
-  $('endrow').style.display=host?'flex':'none';
-  if(!wait&&stuck&&!$('msg').textContent)say('Оставшиеся фишки разместить нельзя. Подтвердите раунд.')}
-
-// Звуки: настоящие записи (sounds/fire.mp3, wind.mp3, click.mp3)
-const SND=(()=>{let ac=null,master=null,on=true,started=false;const buf={},src={};
- try{on=localStorage.getItem('snd')!=='0'}catch(_){}
- const btn=document.createElement('button');btn.setAttribute('aria-label','Звук');
- btn.style.cssText='position:fixed;left:10px;bottom:10px;z-index:50;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(10,18,40,.75);color:#fff;font-size:20px;cursor:pointer';
- const paint=()=>{btn.textContent=on?'🔊':'🔇'};paint();
- async function loadOne(n){try{const ab=await (await fetch('sounds/'+n+'.mp3')).arrayBuffer();buf[n]=await new Promise((ok,no)=>ac.decodeAudioData(ab,ok,no))}catch(_){}}
- function loop(n,vol){if(!buf[n]||src[n])return;const s=ac.createBufferSource();s.buffer=buf[n];s.loop=true;const g=ac.createGain();g.gain.value=vol;s.connect(g);g.connect(master);s.start();src[n]=s}
- async function start(){if(started||!on)return;started=true;
-  try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;ac=new C();master=ac.createGain();master.gain.value=1;master.connect(ac.destination);
-   await Promise.all(['wind','fire','click'].map(loadOne));if(on){loop('wind',0.55);loop('fire',0.35)}}catch(_){}}
- function click(){if(!on||!ac||!buf.click)return;try{const s=ac.createBufferSource();s.buffer=buf.click;const g=ac.createGain();g.gain.value=0.9;s.connect(g);g.connect(master);s.start()}catch(_){}}
- btn.onclick=()=>{on=!on;try{localStorage.setItem('snd',on?'1':'0')}catch(_){}paint();
-  if(on){if(!started)start();else if(ac){ac.resume();loop('wind',0.55);loop('fire',0.35)}}
-  else if(ac){for(const k in src){try{src[k].stop()}catch(_){}delete src[k]}}};
- addEventListener('pointerdown',()=>{if(on){if(!started)start();else if(ac&&ac.state==='suspended')ac.resume()}});
- document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidden)ac.suspend();else if(on)ac.resume()});
- document.body.appendChild(btn);
- return{click}})();
-function cellTap(i){if(!sel||isWait())return;const d=sel;if(d.used)return say('Эта фишка уже на поле. Выберите другую.');
-  if(board[i])return say('Клетка занята.');
-  if(ghost===i)d.rot=(d.rot+1)%4;else ghost=i;
-  say(G.check(board,(i/N)|0,i%N,G.cur(d))?'Подходит. Нажмите «Поставить» или крутите дальше (нажатие на фишку).':'Здесь не подходит: поверните или отразите фишку, либо выберите другую клетку.');render()}
-$('board').onclick=e=>{const el=e.target.closest('[data-i]');if(el)cellTap(+el.dataset.i)};
-if(B3)B3.onTap=cellTap;
-$('place').onclick=()=>{const d=sel;if(isWait()||!d||d.used||ghost==null||board[ghost])return;const i=ghost,t=G.cur(d);
-  if(!G.check(board,(i/N)|0,i%N,t))return say('Сюда нельзя: фишка должна соединяться с выходом или другим путём, а дорога не стыкуется с рельсами без станции.');
-  snaps.push({b:board.slice(),u:dice.map(x=>x.used),su:sps.map(x=>x.used),sr:spRound,s:sel});
-  t.n=S.round;board[i]=t;d.used=true;SND.click();if(d.sp)spRound=true;ghost=null;sel=dice.find(x=>!x.used)||null;say('');render()};
-$('tray').onclick=e=>{const b=e.target.closest('[data-d]');if(!b||isWait())return;const n=dice[+b.dataset.d];if(n===sel&&!n.used)n.rot=(n.rot+1)%4;sel=n;say('');render()};
-$('sp').onclick=e=>{const b=e.target.closest('[data-s]');if(!b||isWait())return;const d=sps[+b.dataset.s];
-  if(d.used)return say('Эта особая фишка уже использована.');
-  if(spTotal()>=3)return say('Особые фишки закончились: за партию можно три.');
-  if(spRound)return say('В этом раунде особая фишка уже использована.');
-  sel=d;say('');render()};
-$('rot').onclick=()=>{if(sel&&!sel.used){sel.rot=(sel.rot+1)%4;render()}};
-$('flip').onclick=()=>{if(sel&&!sel.used){sel.flip=!sel.flip;render()}};
-$('undo').onclick=()=>{ghost=null;const s=snaps.pop();if(!s)return;board=s.b;dice.forEach((d,i)=>d.used=s.u[i]);sps.forEach((d,i)=>d.used=s.su[i]);spRound=s.sr;sel=s.s;say('');render()};
-$('next').onclick=async()=>{ghost=null;try{await api('confirm',{code:S.code,board,spUsed:sps.map(x=>!!x.used)})}catch(e){say(e.message)}};
-$('skip').onclick=()=>api('skip',{code:S.code}).catch(e=>say(e.message));
-$('endm').onclick=()=>{const go=()=>api('end',{code:S.code}).catch(e=>say(e.message)),t='Завершить матч для всех игроков? Будут посчитаны очки по подтверждённым ходам.';
-  if(tg&&tg.initData&&tg.showConfirm)tg.showConfirm(t,ok=>{if(ok)go()});else if(confirm(t))go()};
-$('mk').onclick=async()=>{try{connect((await api('room')).code)}catch(e){$('err').textContent=e.message}};
-$('jn').onclick=()=>enter($('cd').value.trim().toUpperCase());
-$('st').onclick=()=>api('start',{code:S.code}).catch(e=>$('lw').textContent=e.message);
-$('inv').onclick=()=>{
-  const link=CFG.bot?'https://t.me/'+CFG.bot+'?start='+S.code:location.origin+'/?room='+S.code,text='Сыграем в «Рельсы и дороги»! Код комнаты: '+S.code;
-  if(tg&&tg.openTelegramLink&&CFG.bot)tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(text));
-  else if(navigator.clipboard){navigator.clipboard.writeText(link);$('lw').textContent='Ссылка скопирована.'}};
-$('again').onclick=()=>{if(es)es.close();S=null;show('home')};
-$('tbl').innerHTML=PTS.slice(2).map((p,i)=>`<b style="border-right:1px solid #9db4c7;padding:3px 0">${i+2}</b>`).join('')+PTS.slice(2).map(p=>`<span style="border-right:1px solid #9db4c7;border-top:1px solid #9db4c7;padding:3px 0">${p}</span>`).join('');
-fetch('/api/config').then(r=>r.json()).then(c=>CFG=c).catch(()=>{});
-let c0=q.get('room');if(!c0){try{c0=localStorage.ri}catch(e){}}
-if(c0)enter(c0.toUpperCase());else show('home');
+const RK=['2','3','4','5','6','7','8','9','10','J','Q','K','A'],SU=['♠','♥','♦','♣'];
+const red=c=>(c&3)===1||(c&3)===2;
+const card=(c,cls='')=>`<div class="c ${red(c)?'r':''} ${cls}"><b>${RK[c>>2]}</b><span>${SU[c&3]}</span></div>`;
+const mini=c=>`<div class="mc f ${red(c)?'red':''}"><b>${RK[c>>2]}</b><span>${SU[c&3]}</span></div>`;
+const hap=t=>{try{tg&&tg.HapticFeedback&&tg.HapticFeedback.impactOccurred(t||'light')}catch(_){}};
+function toast(t){clearTimeout(toastT);let e=document.querySelector('.toast');if(!e){e=document.createElement('div');e.className='toast';document.body.appendChild(e)}e.textContent=t;toastT=setTimeout(()=>e.remove(),3200)}
+async function post(path,b){try{const r=await fetch(path,{method:'POST',headers:{'content-type':'application/json','x-init':INIT},body:JSON.stringify(b||{})});const j=await r.json();if(!r.ok){toast(j.error||'Ошибка');return null}return j}catch(e){toast('Нет связи с сервером');return null}}
+async function cfg(){try{botName=(await (await fetch('/api/config')).json()).bot||''}catch(_){}}
+const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const saveLocal=v=>{try{localStorage.setItem('wallet',String(v))}catch(_){}try{tg&&tg.CloudStorage&&tg.CloudStorage.setItem('wallet',String(v))}catch(_){}};
+const readSaved=()=>new Promise(ok=>{let done=false;const fin=v=>{if(!done){done=true;ok(v)}};
+  try{if(tg&&tg.CloudStorage){tg.CloudStorage.getItem('wallet',(e,v)=>fin(!e&&v!==''&&v!=null?Number(v):null));setTimeout(()=>fin(null),1500);return}}catch(_){}
+  try{const v=localStorage.getItem('wallet');fin(v===null?null:Number(v))}catch(_){fin(null)}});
+async function loadMe(){const saved=await readSaved();const r=await post('/api/me',{saved});if(r){W=r.wallet;TOP=r.top||[];saveLocal(W)}}
+function connect(c){code=c;if(es)es.close();es=new EventSource('/api/events?code='+c+'&init='+encodeURIComponent(INIT));
+  es.onmessage=e=>{S=JSON.parse(e.data);offset=Date.now()-S.serverNow;if(typeof S.wallet==='number'){W=S.wallet;saveLocal(W)}render()};
+  es.onerror=()=>{}}
+function home(){app.innerHTML=`<h1>Покер</h1><p class="sub">Техасский холдем на игровые фишки. Денег нет.</p>
+ <div class="card-p" style="margin-bottom:12px;text-align:center"><div class="lab">ВАШ КОШЕЛЁК</div><div style="font-size:38px;font-weight:700;margin:4px 0 2px;color:var(--y)">${W==null?'…':fmt(W)}</div><div class="sub" style="margin:0;font-size:13px">Вход за стол — ${fmt(1000)} фишек. Остаток вернётся в кошелёк.</div></div>
+ ${TOP.length>1?`<div class="card-p" style="margin-bottom:12px"><div class="lab" style="margin-bottom:6px">РЕЙТИНГ</div>${TOP.map((t,i)=>`<div class="res" style="padding:8px 0;font-size:15px"><span class="n">${i+1}</span><span>${esc(t.name)}</span><span class="z">${fmt(t.bal)}</span></div>`).join('')}</div>`:''}
+ <div class="card-p"><button class="btn pri" id="mk" style="width:100%">Создать стол</button>
+ <p class="sub" style="margin:18px 0 8px;text-align:center">или войти по коду</p>
+ <div class="row"><input id="cd" maxlength="4" placeholder="КОД" autocomplete="off"><button class="btn wh" id="jn" style="flex:0 0 110px">Войти</button></div></div>`;
+ $('mk').onclick=async()=>{const r=await post('/api/room');if(r)connect(r.code)};
+ $('jn').onclick=async()=>{const c=$('cd').value.trim().toUpperCase();if(c.length<4)return toast('Введите код из 4 букв');const r=await post('/api/join',{code:c});if(r)connect(c)}}
+function lobby(){const me=S.me;
+ const link=botName?`https://t.me/${botName}?start=${S.code}`:'';
+ app.innerHTML=`<h1>Стол</h1><p class="sub">Покажите код друзьям. За столом 2–5 игроков. Вход ${fmt(S.buyin)} фишек из кошелька: слева имя, справа кошелёк.</p>
+ <div class="card-p"><div class="lab" style="text-align:center">КОД СТОЛА</div><div class="code">${S.code}</div>
+ ${link?'<button class="btn wh" id="inv" style="width:100%;margin-top:14px">Пригласить друзей</button>':''}</div>
+ <div class="card-p" style="margin-top:12px">${S.players.map(p=>`<div class="pl"><div class="av">${esc(p.name[0]||'?')}</div><div style="font-weight:600">${esc(p.name)}${p.id===S.host?' <span style="color:var(--s);font-weight:400">· создатель</span>':''}</div><div style="margin-left:auto;color:var(--y);font-weight:600">${fmt(p.wallet||0)}</div></div>`).join('')}</div>
+ <div style="margin-top:auto;padding-top:16px">${S.host===me?`<button class="btn pri" id="go" style="width:100%" ${S.players.length<2?'disabled':''}>Начать игру</button>${S.players.length<2?'<p class="sub" style="text-align:center;margin:10px 0 0">Ждём хотя бы ещё одного игрока</p>':''}`:'<p class="sub" style="text-align:center">Ждём, когда создатель начнёт игру…</p>'}</div>`;
+ const inv=$('inv');if(inv)inv.onclick=()=>{const u='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('Садись за покерный стол, код '+S.code);tg&&tg.openTelegramLink?tg.openTelegramLink(u):window.open(u,'_blank')};
+ const go=$('go');if(go)go.onclick=()=>post('/api/start',{code:S.code})}
+function end(){app.innerHTML=`<h1>Итоги</h1><p class="sub">Игра окончена</p><div class="card-p">${S.results.map((r,i)=>{const d=S.delta?S.delta[r.id]:null;return `<div class="res"><span class="n">${i+1}</span><span>${esc(r.name)}${i===0?' 🏆':''}</span><span class="z">${fmt(r.chips)}${d!=null?` <span style="color:${d>=0?'var(--g)':'var(--r)'};font-size:14px">${d>=0?'+':''}${fmt(d)}</span>`:''}</span></div>`}).join('')}</div>
+ <div class="card-p" style="margin-top:12px;text-align:center"><div class="lab">ВАШ КОШЕЛЁК</div><div style="font-size:34px;font-weight:700;color:var(--y)">${fmt(S.wallet)}</div></div>
+ <div style="margin-top:auto;padding-top:16px"><button class="btn wh" id="again" style="width:100%">На главную</button></div>`;
+ $('again').onclick=async()=>{if(es)es.close();S=null;code=null;home();await loadMe();if(!S&&!code)home()}}
+const remain=()=>S&&S.deadline?Math.max(0,S.deadline-(Date.now()-offset)):0;
+function oppHtml(p){const win=S.showdown&&S.showdown.pots.some(x=>x.winners.includes(p.id));
+ const turn=S.toAct===p.id,cls=(p.folded||p.out?'dim ':'')+(turn?'turn ':'')+(win?'win':'');
+ const cards=p.out?'':p.hole?`<div class="mini">${p.hole.map(mini).join('')}</div>`:p.hasCards?`<div class="mini"><div class="mc"></div><div class="mc"></div></div>`:'';
+ const st=p.out?'вышел':p.last||(p.folded?'сброс':'');
+ return `<div class="op ${cls}" data-id="${p.id}"><div class="av">${esc(p.name[0]||'?')}${S.dealer===p.id?'<div class="dbtn">D</div>':''}</div><div class="nm">${esc(p.name)}</div><div class="ch">${p.chips}</div>${cards}<div class="st">${esc(st)}${p.hand&&S.showdown&&!S.showdown.uncontested?'<br>'+esc(p.hand):''}</div>${turn?'<div class="bar"><i></i></div>':''}</div>`}
+function play(){const me=S.players.find(p=>p.id===S.me),opps=S.players.filter(p=>p.id!==S.me);
+ const myTurn=S.toAct===S.me&&S.phase==='play',sd=S.showdown;
+ const turnKey=S.hand+':'+S.stage+':'+S.toAct+':'+S.currentBet;if(turnKey!==lastTurnKey){lastTurnKey=turnKey;raiseOpen=false;raiseVal=S.minRaiseTo}
+ const newHand=S.hand!==prevHand,bd=S.board.length;
+ let board='';for(let i=0;i<5;i++)board+=S.board[i]!==undefined?card(S.board[i],(newHand?i<bd:i>=prevBoard)?'in':''):'<div class="c e"></div>';
+ const myWin=sd&&sd.pots.some(x=>x.winners.includes(S.me));
+ let msg='';if(sd){msg=sd.pots.map(x=>x.winners.map(id=>esc(S.players.find(p=>p.id===id).name)).join(' и ')+' · +'+x.amount+(x.hand?' · '+esc(x.hand):'')).join('<br>')}
+ else if(S.stage&&S.toAct&&S.toAct!==S.me){const w=S.players.find(p=>p.id===S.toAct);msg='<span style="color:var(--s)">Ходит '+esc(w.name)+'</span>'}
+ else if(myTurn)msg='<span style="color:var(--a)">Ваш ход</span>';
+ const stageN={preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Вскрытие'}[S.stage]||'';
+ const mc=me?Math.max(0,S.toCall):0;
+ let acts='';
+ if(myTurn&&me){const maxTo=me.bet+me.chips,canRaise=me.chips>S.toCall,callLab=S.toCall<=0?'Чек':(S.toCall>=me.chips?'Олл-ин '+me.chips:'Колл '+S.toCall);
+   const minTo=Math.min(S.minRaiseTo,maxTo);if(raiseVal<minTo)raiseVal=minTo;if(raiseVal>maxTo)raiseVal=maxTo;
+   acts=`<div class="bar"><i id="tb"></i></div>`+(raiseOpen&&canRaise?`<div class="rp"><div class="lab" style="text-align:center">ПОВЫСИТЬ ДО</div><div class="big" id="rv">${raiseVal}</div>
+    <input type="range" id="rs" min="${minTo}" max="${maxTo}" step="1" value="${raiseVal}">
+    <div class="q"><button data-q="h">½ банка</button><button data-q="p">Банк</button><button data-q="a">Олл-ин</button></div>
+    <div class="row"><button class="btn" id="rc">Отмена</button><button class="btn pri" id="rok">Повысить</button></div></div>`:
+   `<div class="row"><button class="btn red" id="fd">Сбросить</button><button class="btn pri" id="cl">${callLab}</button>${canRaise?'<button class="btn wh" id="rz">Повысить</button>':''}</div>`)}
+ else if(S.phase==='play'){acts=`<div class="row"><button class="btn" disabled>Сбросить</button><button class="btn" disabled>Колл</button><button class="btn" disabled>Повысить</button></div>`}
+ const info=me?(me.out?'Вы вышли из игры':me.folded?'Вы сбросили карты':''):'';
+ app.innerHTML=`<div class="top"><span>Раздача ${S.hand} · ${stageN}</span><span>Блайнды ${S.blinds.sb}/${S.blinds.bb}</span>${S.host===S.me?'<button class="link" id="em">Завершить</button>':'<span></span>'}</div>
+ <div class="opps">${opps.map(oppHtml).join('')}</div>
+ <div class="table"><div class="lab">БАНК</div><div class="pot">${S.pot}</div><div class="board">${board}</div><div class="msg ${sd?'w':''}">${msg||'&nbsp;'}</div></div>
+ <div class="me"><div class="hn">${esc(S.myHand||'')}</div><div class="hole ${myWin?'win':''}">${S.myHole.length?S.myHole.map(c=>card(c,newHand?'in':'')).join(''):''}</div>
+  <div class="mi"><b>${me?esc(me.name):''}</b> · ${me?fmt(me.chips):0} за столом${me&&me.bet?' · ставка '+me.bet:''}${S.dealer===S.me?' · дилер':''}</div><div class="mi">${info}</div></div>
+ <div class="acts">${acts}</div>`;
+ prevBoard=bd;prevHand=S.hand;
+ const g=id=>$(id);
+ if(g('fd'))g('fd').onclick=()=>{hap('medium');post('/api/act',{code:S.code,action:'fold'})};
+ if(g('cl'))g('cl').onclick=()=>{hap();post('/api/act',{code:S.code,action:S.toCall<=0?'check':'call'})};
+ if(g('rz'))g('rz').onclick=()=>{raiseOpen=true;render()};
+ if(g('rc'))g('rc').onclick=()=>{raiseOpen=false;render()};
+ if(g('rok'))g('rok').onclick=()=>{hap('medium');post('/api/act',{code:S.code,action:'raise',amount:raiseVal})};
+ if(g('rs'))g('rs').oninput=e=>{raiseVal=+e.target.value;g('rv').textContent=raiseVal};
+ document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const s=g('rs'),mn=+s.min,mx=+s.max,q=b.dataset.q;let v=q==='a'?mx:Math.round((q==='h'?S.pot/2:S.pot)/10)*10+S.currentBet;raiseVal=Math.max(mn,Math.min(mx,v));s.value=raiseVal;g('rv').textContent=raiseVal});
+ if(g('em'))g('em').onclick=()=>{const go=()=>post('/api/end',{code:S.code});tg&&tg.showConfirm?tg.showConfirm('Завершить матч для всех?',ok=>ok&&go()):confirm('Завершить матч для всех?')&&go()};
+ tickBars()}
+function tickBars(){if(!S||S.phase!=='play')return;const r=remain(),f=Math.max(0,Math.min(1,r/S.turnMs));
+ document.querySelectorAll('.bar i').forEach(i=>{i.style.width=(f*100)+'%';i.style.background=f<.25?'var(--r)':'var(--a)'})}
+setInterval(tickBars,250);
+function render(){if(!S)return home();if(S.phase==='lobby')lobby();else if(S.phase==='end')end();else play()}
+(async()=>{await cfg();if(INIT)await loadMe();const r=(qs.get('room')||'').toUpperCase();
+ if(r&&INIT){const j=await post('/api/join',{code:r});if(j)return connect(r)}
+ home()})();
 </script></body></html>
